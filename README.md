@@ -13,4 +13,4 @@ Convert a .map file from [Azgaar's Fantasy Map Generator](https://azgaar.github.
 
 1. Generate a fantasy map using [Azgaar's Fantasy Map Generator](https://azgaar.github.io/Fantasy-Map-Generator/)
 2. Export to `machine` (saves a .map file to your Downloads folder)
-3. Run `npm run convert --map ~/path/to/fmg.map --out ~/path/to/obsidian-vault`
+3. Run `npm run convert -- --map ~/path/to/fmg.map --out ~/path/to/obsidian-vault`
