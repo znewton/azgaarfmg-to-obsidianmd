@@ -15,6 +15,16 @@ export async function convertMapToObsidianVault(
 	}
 	const mapFile = await fs.readFile(mapFilePath, { encoding: "utf-8" });
 	const parsedMap: IRawMap = parseMapFile(mapFile);
-
-	console.log(parsedMap);
+	console.log("Stats: ", {
+		cultures: parsedMap.cultures.length,
+		burgs: parsedMap.burgs.length,
+		states: parsedMap.states.length,
+		regiments: parsedMap.regiments.length,
+		provinces: parsedMap.provinces.length,
+		religions: parsedMap.religions.length,
+		rivers: parsedMap.rivers.length,
+		markers: parsedMap.markers.length,
+		routes: parsedMap.routes.length,
+		notes: parsedMap.notes.length,
+	});
 }

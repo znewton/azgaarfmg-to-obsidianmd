@@ -447,7 +447,7 @@ export interface IReligion {
 	/**
 	 * religion supreme deity if any
 	 */
-	deity: string;
+	deity: string | null;
 	/**
 	 * religion color in hex (e.g. #45ff12) or link to hatching pattern (e.g. url(#hatch7))
 	 */
@@ -646,7 +646,7 @@ export interface IRoute {
 	/**
 	 * array of control points in format [x, y, cellId]
 	 */
-	points: number[];
+	points: number[][];
 	/**
 	 * feature id of the route. Auto-generated routes cannot be place on multiple features
 	 */

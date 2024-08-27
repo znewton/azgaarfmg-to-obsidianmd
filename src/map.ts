@@ -363,7 +363,7 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 				map.burgs.push(obj);
 			} else if (isIState(obj)) {
 				map.states.push(obj);
-				map.regiments.push(...(obj as IState).military);
+				// map.regiments.push(...((obj as IState).military ?? []));
 			} else if (isIRawProvince(obj)) {
 				map.provinces.push(obj);
 			} else if (isIRawReligion(obj)) {
