@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
-import { parseMapFile } from "./map";
-import type { IMap } from "./definitions";
+import type { IBiome, IJsonMap, IJsonMapEx } from "./definitions";
+import { buildBiomes } from "./mapJson";
 
 export async function convertMapToObsidianVault(
 	mapFilePath: string,
@@ -13,18 +13,20 @@ export async function convertMapToObsidianVault(
 		// TODO: Create if not exists
 		throw new Error("Provided Obsidian Vault Path was not a Directory.");
 	}
-	const mapFile = await fs.readFile(mapFilePath, { encoding: "utf-8" });
-	const parsedMap: IMap = parseMapFile(mapFile);
+	const mapJson = await fs.readFile(mapFilePath, { encoding: "utf-8" });
+	const parsedMap: IJsonMap = JSON.parse(mapJson);
+	const biomes: IBiome[] = buildBiomes(parsedMap);
 	console.log("Stats: ", {
-		cultures: parsedMap.cultures.length,
-		burgs: parsedMap.burgs.length,
-		states: parsedMap.states.length,
-		regiments: parsedMap.regiments.length,
-		provinces: parsedMap.provinces.length,
-		religions: parsedMap.religions.length,
-		rivers: parsedMap.rivers.length,
-		markers: parsedMap.markers.length,
-		routes: parsedMap.routes.length,
+		cultures: parsedMap.pack.cultures.length,
+		burgs: parsedMap.pack.burgs.length,
+		states: parsedMap.pack.states.length,
+		provinces: parsedMap.pack.provinces.length,
+		religions: parsedMap.pack.religions.length,
+		rivers: parsedMap.pack.rivers.length,
+		markers: parsedMap.pack.markers.length,
+		routes: parsedMap.pack.routes.length,
 		notes: parsedMap.notes.length,
+		biomes: biomes.length,
 	});
+	const map: IJsonMapEx = { ...parsedMap, biomes };
 }

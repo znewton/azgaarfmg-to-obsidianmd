@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { IBurg, ICulture, IMap, IMapMetadata } from "./definitions";
+import type { IBurg, ICulture, IJsonMap, IJsonMapEx } from "./definitions";
 
 /**
  * Make a directory at the given path, as well as any necessary parent directories.
@@ -128,23 +128,19 @@ export function readableNumber(num: number): string {
 	}).format(num);
 }
 
-function computeAreaFromPixels(
-	areaInPixels: number,
-	mapMetadata: IMapMetadata,
-): number {
-	return areaInPixels * (mapMetadata.distanceScale * mapMetadata.distanceScale);
+function computeAreaFromPixels(areaInPixels: number, map: IJsonMap): number {
+	return (
+		areaInPixels * (map.settings.distanceScale * map.settings.distanceScale)
+	);
 }
 
-export function readableArea(
-	areaInPixels: number,
-	mapMetadata: IMapMetadata,
-): string {
-	const areaInMapUnits = computeAreaFromPixels(areaInPixels, mapMetadata);
+export function readableArea(areaInPixels: number, map: IJsonMap): string {
+	const areaInMapUnits = computeAreaFromPixels(areaInPixels, map);
 	const getUnitStr = () => {
-		if (mapMetadata.areaUnit === "square") {
-			return `${mapMetadata.distanceUnit}<sup>2</sup>`;
+		if (map.settings.areaUnit === "square") {
+			return `${map.settings.distanceUnit}<sup>2</sup>`;
 		}
-		throw new Error(`Unrecognized Area Unit: ${mapMetadata.areaUnit}`);
+		throw new Error(`Unrecognized Area Unit: ${map.settings.areaUnit}`);
 	};
 	return `${readableNumber(areaInMapUnits)} ${getUnitStr()}`;
 }
@@ -152,26 +148,26 @@ export function readableArea(
 function computePopulation(
 	ruralPopulationPoints: number,
 	urbanPopulationPoints: number,
-	mapMetadata: IMapMetadata,
+	map: IJsonMap,
 ): { total: number; rural: number; urban: number } {
 	return {
 		total:
 			(ruralPopulationPoints + urbanPopulationPoints) *
-			mapMetadata.populationRate,
-		urban: urbanPopulationPoints * mapMetadata.populationRate,
-		rural: ruralPopulationPoints * mapMetadata.populationRate,
+			map.settings.populationRate,
+		urban: urbanPopulationPoints * map.settings.populationRate,
+		rural: ruralPopulationPoints * map.settings.populationRate,
 	};
 }
 
 export function readablePopulation(
 	ruralPopulationPoints: number,
 	urbanPopulationPoints: number,
-	mapMetadata: IMapMetadata,
+	map: IJsonMap,
 ): { total: string; rural: string; urban: string } {
 	const computed = computePopulation(
 		ruralPopulationPoints,
 		urbanPopulationPoints,
-		mapMetadata,
+		map,
 	);
 	return {
 		total: readableNumber(computed.total),
@@ -207,7 +203,7 @@ export interface IMarkdownNote {
  */
 export function cultureToMd(
 	culture: ICulture,
-	map: IMap,
+	map: IJsonMapEx,
 	vault: IVaultDirectory,
 ): IMarkdownNote {
 	const nameParts = culture.name.match(/(.*) \((.*)\)/);
@@ -220,16 +216,16 @@ export function cultureToMd(
 	const populationNumbers = computePopulation(
 		culture.rural,
 		culture.urban,
-		map.metadata,
+		map,
 	);
 	const populationStrings = readablePopulation(
 		culture.rural,
 		culture.urban,
-		map.metadata,
+		map,
 	);
 	// TODO: Link to name base file for random tables
 	const nameBase =
-		map.nameBases.find((base) => base.i === culture.base)?.name ?? "Any";
+		map.nameBases.find((base, i) => i === culture.base)?.name ?? "Any";
 	const contents = `---
 alias: "${culture.name}"
 tags:
@@ -237,7 +233,7 @@ tags:
 names: ${nameBase}
 type: ${culture.type}
 species: ${species}
-area: ${computeAreaFromPixels(culture.area, map.metadata)}
+area: ${computeAreaFromPixels(culture.area, map)}
 totalPopulation: ${populationNumbers.total}
 urbanPopulation: ${populationNumbers.urban}
 ruralPopulation: ${populationNumbers.rural}
@@ -248,7 +244,7 @@ ruralPopulation: ${populationNumbers.rural}
 ${propertyListToMd({
 	Names: nameBase,
 	Type: culture.type,
-	Area: readableArea(culture.area, map.metadata),
+	Area: readableArea(culture.area, map),
 	Population: `${populationStrings.total} (${populationStrings.urban} Urban, ${populationStrings.rural} Rural)`,
 })}
 `;
@@ -260,18 +256,19 @@ ${propertyListToMd({
 
 export function burgToMd(
 	burg: IBurg,
-	map: IMap,
+	map: IJsonMapEx,
 	vault: IVaultDirectory,
 ): IMarkdownNote {
 	const fileName = burg.name;
-	const population = burg.population * map.metadata.populationRate;
+	const population = burg.population * map.settings.populationRate;
 	const villageOrCity =
-		population > map.metadata.villageMaxPopulation ? "city" : "village";
+		population > map.settings.options.villageMaxPopulation ? "city" : "village";
 	const contents = `---
 tags:
 - burg
 - ${villageOrCity}
 population: ${population}
+type: ${burg.type}
 ---
 
 ![floatright]()

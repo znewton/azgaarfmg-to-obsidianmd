@@ -1,135 +1,3 @@
-export interface IMapFileSettings {
-	pinNotes: boolean;
-	winds: number[];
-	/**
-	 * Temperature at the equator.
-	 */
-	temperatureEquator: number;
-	/**
-	 * Temperature at the North Pole.
-	 */
-	temperatureNorthPole: number;
-	/**
-	 * Temperature at the South Pole.
-	 */
-	temperatureSouthPole: number;
-	stateLabelsMode: string;
-	showBurgPreview: boolean;
-	/**
-	 * Max population of a Burg to be considered a village.
-	 * If population is greater, it is considered a city.
-	 */
-	villageMaxPopulation: number;
-	/**
-	 * Current year in the world's calendar.
-	 */
-	year: number;
-	/**
-	 * Current Era in the worlds timeline.
-	 */
-	era: string;
-	/**
-	 * An abbreviated version of the Era (e.g. Rocleston Era -> RE)
-	 * to be used when listing a year in an era (e.g. 1008 RE).
-	 */
-	eraShort: string;
-	/**
-	 * List of military settings for simulating combat.
-	 */
-	military: object[];
-}
-
-export interface IMapMetadata
-	extends Pick<
-		IMapFileSettings,
-		"villageMaxPopulation" | "year" | "era" | "eraShort"
-	> {
-	/**
-	 * File version (e.g. 1.99.03)
-	 */
-	version: string;
-	/**
-	 * Tip telling the opener of the file how to load it.
-	 */
-	tip: string;
-	/**
-	 * Date created as Milliseconds since epoch.
-	 */
-	createdTimestamp: number;
-	/**
-	 * Unique seed number used for generating towns and such.
-	 */
-	seed: number;
-	/**
-	 * Original width of the map in pixels.
-	 */
-	width: number;
-	/**
-	 * Original height of the map in pixels.
-	 */
-	height: number;
-	/**
-	 * Unique id number (as far as I can tell).
-	 */
-	id: number;
-	/**
-	 * Unit for labeling distances (e.g. mi, km)
-	 */
-	distanceUnit: string;
-	/**
-	 * Distance covered by 1 pixel (e.g. 4 means 1 pixel is 4 of distanceUnit).
-	 */
-	distanceScale: number;
-	/**
-	 * Unit for labeling areas (e.g. square)
-	 */
-	areaUnit: string;
-	/**
-	 * Unit for labeling heights (e.g. ft, m)
-	 */
-	heightUnit: string;
-	/**
-	 * Unit for labeling temperature (e.g. °F, °C)
-	 */
-	temperatureUnit: string;
-	/**
-	 * Number of people per population point.
-	 */
-	populationRate: number;
-	/**
-	 * Name of the world shown in the map.
-	 */
-	worldName: string;
-	/**
-	 * Total Latitude displayed by map.
-	 */
-	totalLatitude: number;
-	/**
-	 * Total Longitude displayed by map.
-	 */
-	totalLongitude: number;
-	/**
-	 * North latitude bound.
-	 */
-	latitudeNorth: number;
-	/**
-	 * South latitude bound.
-	 */
-	latitudeSouth: number;
-	/**
-	 * West longitude bound.
-	 */
-	longitudeWest: number;
-	/**
-	 * East longitude bound.
-	 */
-	longitudeEast: number;
-	/**
-	 * List of biome names.
-	 */
-	biomes: string[];
-}
-
 /**
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Cultures
  */
@@ -520,7 +388,7 @@ export interface IProvince {
 	/**
 	 * id of burgs within the province. Optional (added when Province editor is opened)
 	 */
-	burgs?: number[];
+	burgs: number[];
 	/**
 	 * number of cells within the province
 	 */
@@ -789,42 +657,41 @@ export interface IRoute {
 }
 
 /**
- * TODO: Does not appear to be included in .map
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Biomes
  */
 export interface IBiome {
 	/**
 	 * biome id
 	 */
-	i: number[];
+	i: number;
 	/**
 	 * biome names
 	 */
-	name: string[];
+	name: string;
 	/**
 	 * biome colors in hex (e.g. #45ff12) or link to hatching pattern (e.g. url(#hatch7))
 	 */
-	color: string[];
+	color: string;
 	/**
 	 * 2d matrix used to define cell biome by temperature and moisture. Columns contain temperature data going from > 19 °C to < -4 °C. Rows contain data for 5 moisture bands from the drier to the wettest one. Each row is a Uint8Array
 	 */
-	biomesMartix: number[][];
+	biomesMartix: Record<string, number>[];
 	/**
 	 * biome movement cost, must be 0 or positive. Extensively used during cultures, states and religions growth phase. 0 means spread to this biome costs nothing. Max value is not defined, but 5000 is the actual max used by default
 	 */
-	cost: number[];
+	cost: number;
 	/**
 	 * biome habitability, must be 0 or positive. 0 means the biome is uninhabitable, max value is not defined, but 100 is the actual max used by default
 	 */
-	habitability: number[];
+	habitability: number;
 	/**
 	 * non-weighed array of icons for each biome. Used for relief icons rendering. Not-weighed means that random icons from array is selected, so the same icons can be mentioned multiple times
 	 */
-	icons: string[][];
+	icons: string[];
 	/**
 	 * defines how packed icons can be for the biome. An integer from 0 to 150
 	 */
-	iconsDensity: number[];
+	iconsDensity: number;
 }
 
 /**
@@ -846,14 +713,9 @@ export interface INote {
 }
 
 /**
- * TODO: Does not appear to be included in .map file
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#NameBases
  */
 export interface INameBase {
-	/**
-	 * base id, always equal to the array index
-	 */
-	i: number;
 	/**
 	 * names base proper name
 	 */
@@ -863,44 +725,27 @@ export interface INameBase {
 	 */
 	b?: string;
 	/**
+	 * Parsable Integer.
 	 * recommended minimal length of generated names. Generator will adding new syllables until min length is reached
 	 */
-	min: number;
+	min: string;
 	/**
+	 * Parsable Integer.
 	 * recommended maximal length of generated names. If max length is reached, generator will stop adding new syllables
 	 */
-	max: number;
+	max: string;
 	/**
 	 * letters that are allowed to be duplicated in generated names
 	 */
 	d: string;
 	/**
+	 * Parsable Float.
 	 * if multi-word name is generated, how many of this cases should be transformed into a single word.
 	 * 0 means multi-word names are not allowed,
 	 * 1 - all generated multi-word names will stay as they are
 	 */
-	m: number;
+	m: string;
 }
-
-export interface IMap {
-	metadata: IMapMetadata;
-	cultures: (IWildCulture & Partial<ICulture>)[];
-	burgs: IBurg[];
-	states: (INeutralState & Partial<IState>)[];
-	regiments: IRegiment[];
-	provinces: IProvince[];
-	religions: (INoReligion & Partial<IReligion>)[];
-	rivers: IRiver[];
-	markers: IMarker[];
-	routes: IRoute[];
-	biomes: IBiome[];
-	notes: INote[];
-	nameBases: INameBase[];
-}
-
-// ---
-// JSON Map Version Below
-// ---
 
 export interface IMapInfo {
 	/**
@@ -1268,7 +1113,7 @@ export interface IBiomesData {
 	 *
 	 * Yes, Matrix is misspelled in the data.
 	 */
-	biomesMartix: number[][];
+	biomesMartix: Record<string, number>[];
 	/**
 	 * Biome movement cost from 0-5000.
 	 * Used for determining culture, state, and religion growth.
@@ -1364,6 +1209,11 @@ export interface IJsonMap {
 		cells: IGridCell[];
 		// Contains other info, but we don't care about it.
 	};
-	notes: INote;
+	notes: INote[];
 	biomesData: IBiomesData;
+	nameBases: INameBase[];
+}
+
+export interface IJsonMapEx extends IJsonMap {
+	biomes: IBiome[];
 }

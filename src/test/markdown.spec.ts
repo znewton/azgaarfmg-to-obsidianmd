@@ -1,6 +1,6 @@
 import { describe, expect, test } from "@jest/globals";
 import { readableArea, readableNumber, readablePopulation } from "../markdown";
-import type { IMapMetadata } from "../definitions";
+import type { IJsonMap, IMapSettings } from "../definitions";
 
 describe("markdown helpers & converters", () => {
 	describe("readableNumber()", () => {
@@ -36,33 +36,33 @@ describe("markdown helpers & converters", () => {
 	});
 	describe("readableArea()", () => {
 		test("displays scaled pixels as square miles", () => {
-			const mockMetadata: Partial<IMapMetadata> = {
+			const mockSettings: Partial<IMapSettings> = {
 				distanceScale: 4,
 				distanceUnit: "mi",
 				areaUnit: "square",
 			};
-			expect(readableArea(1, mockMetadata as IMapMetadata)).toBe(
+			expect(readableArea(1, { settings: mockSettings } as IJsonMap)).toBe(
 				"16 mi<sup>2</sup>",
 			);
 		});
 		test("displays scaled pixels as square kilometers", () => {
-			const mockMetadata: Partial<IMapMetadata> = {
+			const mockSettings: Partial<IMapSettings> = {
 				distanceScale: 10,
 				distanceUnit: "km",
 				areaUnit: "square",
 			};
-			expect(readableArea(1, mockMetadata as IMapMetadata)).toBe(
+			expect(readableArea(1, { settings: mockSettings } as IJsonMap)).toBe(
 				"100 km<sup>2</sup>",
 			);
 		});
 	});
 	describe("readablePopulation()", () => {
 		test("scales by population rate", () => {
-			const mockMetadata: Partial<IMapMetadata> = {
+			const mockSettings: Partial<IMapSettings> = {
 				populationRate: 1000,
 			};
 			expect(
-				readablePopulation(1, 2, mockMetadata as IMapMetadata),
+				readablePopulation(1, 2, { settings: mockSettings } as IJsonMap),
 			).toStrictEqual({
 				total: "3K",
 				urban: "2K",

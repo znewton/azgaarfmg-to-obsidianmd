@@ -11,6 +11,12 @@
 	},
 	"files": {
 		"ignoreUnknown": true,
-		"ignore": [".vscode/**", "coverage/**", "dist/**", "node_modules/**"]
+		"ignore": [
+			".vscode/**",
+			"coverage/**",
+			"dist/**",
+			"node_modules/**",
+			"src/test/example/**"
+		]
 	}
 }
