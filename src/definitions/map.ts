@@ -152,9 +152,8 @@ export interface ICulture {
 	 */
 	removed?: boolean;
 }
-export type IRawCulture = Omit<ICulture, "area" | "cells" | "rural" | "urban">;
 export type IWildCulture = Omit<
-	IRawCulture,
+	ICulture,
 	"center" | "code" | "color" | "expansionism" | "type"
 >;
 
@@ -426,7 +425,7 @@ export interface IRegiment {
 	/**
 	 * regiment content object, unitName-Number pair
 	 */
-	u: Record<string, number>;
+	u: Record<string, number | undefined>;
 }
 
 /**
@@ -476,7 +475,7 @@ export interface IProvince {
 	/**
 	 * number of cells within the province
 	 */
-	cells: number;
+	// cells: number;
 	/**
 	 * rural (non-burg) population of province cells. In population points
 	 */
@@ -498,10 +497,6 @@ export interface IProvince {
 	 */
 	removed?: boolean;
 }
-export type IRawProvince = Omit<
-	IProvince,
-	"area" | "cells" | "rural" | "urban"
->;
 
 /**
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Religions
@@ -538,7 +533,7 @@ export interface IReligion {
 	/**
 	 * ids of ancestor religions. [0] if religion doesn't have an ancestor. Used to render religions tree. The first array member is main link, other - supporting out-of-tree links
 	 */
-	origins: number[];
+	origins: number[] | null;
 	/**
 	 * cell id of religion center (initial cell)
 	 */
@@ -584,11 +579,7 @@ export interface IReligion {
 	 */
 	removed?: boolean;
 }
-export type IRawReligion = Omit<
-	IReligion,
-	"area" | "cells" | "rural" | "urban"
->;
-export type INoReligion = Pick<IReligion, "i" | "name"> & { origins: null };
+export type INoReligion = Pick<IReligion, "i" | "name" | "origins">;
 
 /**
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Rivers
@@ -840,25 +831,6 @@ export interface INameBase {
 	 * 1 - all generated multi-word names will stay as they are
 	 */
 	m: number;
-}
-
-/**
- * The Map as directly parsed from the .map file
- */
-export interface IRawMap {
-	metadata: IMapMetadata;
-	cultures: (IRawCulture | IWildCulture)[];
-	burgs: IBurg[];
-	states: (IState | INeutralState)[];
-	regiments: IRegiment[];
-	provinces: IRawProvince[];
-	religions: (IRawReligion | INoReligion)[];
-	rivers: IRiver[];
-	markers: IMarker[];
-	routes: IRoute[];
-	biomes: IBiome[];
-	notes: INote[];
-	nameBases: INameBase[];
 }
 
 export interface IMap {

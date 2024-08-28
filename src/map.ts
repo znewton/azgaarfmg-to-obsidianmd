@@ -1,6 +1,7 @@
 import type {
 	IBiome,
 	IBurg,
+	ICulture,
 	IMap,
 	IMapMetadata,
 	IMarker,
@@ -9,10 +10,6 @@ import type {
 	INoReligion,
 	INote,
 	IProvince,
-	IRawCulture,
-	IRawMap,
-	IRawProvince,
-	IRawReligion,
 	IRegiment,
 	IReligion,
 	IRiver,
@@ -39,7 +36,7 @@ export function isIWildCulture(obj: unknown): obj is IWildCulture {
 	);
 }
 
-export function isIRawCulture(obj: unknown): obj is IRawCulture {
+export function isICulture(obj: unknown): obj is ICulture {
 	return (
 		typeof obj === "object" &&
 		typeof (obj as IWildCulture).i === "number" &&
@@ -47,16 +44,16 @@ export function isIRawCulture(obj: unknown): obj is IRawCulture {
 		typeof (obj as IWildCulture).name === "string" &&
 		Array.isArray((obj as IWildCulture).origins) &&
 		typeof (obj as IWildCulture).shield === "string" &&
-		(obj as IRawCulture).origins.every((v) => typeof v === "number") &&
-		typeof (obj as IRawCulture).center === "number" &&
-		typeof (obj as IRawCulture).code === "string" &&
-		typeof (obj as IRawCulture).color === "string" &&
-		typeof (obj as IRawCulture).expansionism === "number" &&
-		typeof (obj as IRawCulture).type === "string" &&
-		(typeof (obj as IRawCulture).lock === "undefined" ||
-			typeof (obj as IRawCulture).lock === "boolean") &&
-		(typeof (obj as IRawCulture).removed === "undefined" ||
-			typeof (obj as IRawCulture).removed === "boolean")
+		(obj as ICulture).origins.every((v) => typeof v === "number") &&
+		typeof (obj as ICulture).center === "number" &&
+		typeof (obj as ICulture).code === "string" &&
+		typeof (obj as ICulture).color === "string" &&
+		typeof (obj as ICulture).expansionism === "number" &&
+		typeof (obj as ICulture).type === "string" &&
+		(typeof (obj as ICulture).lock === "undefined" ||
+			typeof (obj as ICulture).lock === "boolean") &&
+		(typeof (obj as ICulture).removed === "undefined" ||
+			typeof (obj as ICulture).removed === "boolean")
 	);
 }
 
@@ -156,7 +153,7 @@ export function isIRegiment(obj: unknown): obj is IRegiment {
 	);
 }
 
-export function isIRawProvince(obj: unknown): obj is IRawProvince {
+export function isIProvince(obj: unknown): obj is IProvince {
 	return (
 		typeof obj === "object" &&
 		typeof (obj as IProvince).i === "number" &&
@@ -189,7 +186,7 @@ export function isINoReligion(obj: unknown): obj is INoReligion {
 	);
 }
 
-export function isIRawReligion(obj: unknown): obj is IRawReligion {
+export function isIReligion(obj: unknown): obj is IReligion {
 	return (
 		typeof obj === "object" &&
 		typeof (obj as IReligion).i === "number" &&
@@ -200,8 +197,10 @@ export function isIRawReligion(obj: unknown): obj is IRawReligion {
 			typeof (obj as IReligion).deity === "string") &&
 		typeof (obj as IReligion).color === "string" &&
 		typeof (obj as IReligion).code === "string" &&
-		Array.isArray((obj as IReligion).origins) &&
-		(obj as IReligion).origins.every((v) => typeof v === "number") &&
+		((obj as IReligion).origins === null ||
+			(Array.isArray((obj as IReligion).origins) &&
+				(obj as IReligion).origins?.every((v) => typeof v === "number") ===
+					true)) &&
 		typeof (obj as IReligion).center === "number" &&
 		typeof (obj as IReligion).culture === "number" &&
 		((obj as IReligion).pole === undefined ||
@@ -384,9 +383,9 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
  * Parse a raw .map file into a usable JS object.
  *
  * @param rawMapFile - String representing file contents of FMG .map file
- * @returns information from the .map file in a more usable {@link IRawMap} format
+ * @returns information from the .map file in a more usable {@link IMap} format
  */
-export function parseMapFile(rawMapFile: string): IRawMap {
+export function parseMapFile(rawMapFile: string): IMap {
 	const metadata = getMapMetadata(rawMapFile);
 	const rawLines: string[] = rawMapFile.split("\n");
 	if (!isCompatible(metadata.version)) {
@@ -409,7 +408,7 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 	console.log(
 		`Found ${unknownLines.length} lines of Unknown info in map file.`,
 	);
-	const map: IRawMap = {
+	const map: IMap = {
 		metadata,
 		cultures: [],
 		burgs: [],
@@ -434,16 +433,16 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 		// to track those types separately, we can just push each type-checked
 		// object to its appropriate IMap property.
 		for (const obj of jsonLine as unknown[]) {
-			if (isIRawCulture(obj) || isIWildCulture(obj)) {
+			if (isICulture(obj) || isIWildCulture(obj)) {
 				map.cultures.push(obj);
 			} else if (isIBurg(obj)) {
 				map.burgs.push(obj);
 			} else if (isIState(obj)) {
 				map.states.push(obj);
 				// map.regiments.push(...((obj as IState).military ?? []));
-			} else if (isIRawProvince(obj)) {
+			} else if (isIProvince(obj)) {
 				map.provinces.push(obj);
-			} else if (isIRawReligion(obj) || isINoReligion(obj)) {
+			} else if (isIReligion(obj) || isINoReligion(obj)) {
 				map.religions.push(obj);
 			} else if (isIRiver(obj)) {
 				map.rivers.push(obj);
@@ -457,31 +456,5 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 		}
 	}
 
-	return map;
-}
-
-/**
- * Returns full map data with computed information.
- * @param rawMap - raw data parsed from .map file
- */
-export function computeFullMapFromRawMap(rawMap: IRawMap): IMap {
-	const map: IMap = {
-		metadata: rawMap.metadata,
-		cultures: [],
-		burgs: [...rawMap.burgs],
-		states: [...rawMap.states],
-		regiments: [...rawMap.regiments],
-		provinces: [],
-		religions: [],
-		rivers: [...rawMap.rivers],
-		markers: [...rawMap.markers],
-		routes: [...rawMap.routes],
-		biomes: [...rawMap.biomes],
-		notes: [...rawMap.notes],
-		nameBases: [...rawMap.nameBases],
-	};
-
-	for (const rawReligion of rawMap.religions) {
-	}
 	return map;
 }

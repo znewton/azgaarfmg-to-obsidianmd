@@ -1,6 +1,6 @@
 import fs from "node:fs/promises";
 import { parseMapFile } from "./map";
-import type { IRawMap } from "./definitions";
+import type { IMap } from "./definitions";
 
 export async function convertMapToObsidianVault(
 	mapFilePath: string,
@@ -14,7 +14,7 @@ export async function convertMapToObsidianVault(
 		throw new Error("Provided Obsidian Vault Path was not a Directory.");
 	}
 	const mapFile = await fs.readFile(mapFilePath, { encoding: "utf-8" });
-	const parsedMap: IRawMap = parseMapFile(mapFile);
+	const parsedMap: IMap = parseMapFile(mapFile);
 	console.log("Stats: ", {
 		cultures: parsedMap.cultures.length,
 		burgs: parsedMap.burgs.length,

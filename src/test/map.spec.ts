@@ -8,9 +8,6 @@ import {
 	isIMarker,
 	isINameBase,
 	isINote,
-	isIRawProvince,
-	isIRawCulture,
-	isIRawReligion,
 	isIRiver,
 	isIRoute,
 	isIState,
@@ -18,18 +15,20 @@ import {
 	isIWildCulture,
 	isINoReligion,
 	getMapMetadata,
-	computeFullMapFromRawMap,
+	isICulture,
+	isIProvince,
+	isIReligion,
 } from "../map";
-import type { IMapMetadata, IRawMap, IRegiment } from "../definitions";
+import type { IMapMetadata, IMap } from "../definitions";
 import { parseCSV } from "./example/utils";
 
 describe("map parsing", () => {
 	describe("type guards", () => {
-		test("isIRawCulture()", () => {
+		test("isICulture()", () => {
 			expect(isIWildCulture(examples.cultures[0])).toStrictEqual(true);
 			const culturesListExample: unknown[] = examples.cultures.slice(1);
 			for (const cultureExample of culturesListExample) {
-				expect(isIRawCulture(cultureExample)).toStrictEqual(true);
+				expect(isICulture(cultureExample)).toStrictEqual(true);
 			}
 		});
 		test("isIBurg()", () => {
@@ -44,17 +43,17 @@ describe("map parsing", () => {
 				expect(isIState(stateExample)).toStrictEqual(true);
 			}
 		});
-		test("isIRawProvince()", () => {
+		test("isIProvince()", () => {
 			const provincesListExample: unknown[] = examples.provinces;
 			for (const provinceExample of provincesListExample) {
-				expect(isIRawProvince(provinceExample)).toStrictEqual(true);
+				expect(isIProvince(provinceExample)).toStrictEqual(true);
 			}
 		});
-		test("isIRawReligion()", () => {
+		test("isIReligion()", () => {
 			expect(isINoReligion(examples.religions[0])).toStrictEqual(true);
 			const religionsListExample: unknown[] = examples.religions.slice(1);
 			for (const religionExample of religionsListExample) {
-				expect(isIRawReligion(religionExample)).toStrictEqual(true);
+				expect(isIReligion(religionExample)).toStrictEqual(true);
 			}
 		});
 		test("isIRiver()", () => {
@@ -105,7 +104,7 @@ describe("map parsing", () => {
 			seed: 516329251,
 			width: 1710,
 			height: 983,
-			id: 1723940448793,
+			id: 1724705983305,
 			distanceUnit: "mi",
 			distanceScale: 4,
 			areaUnit: "square",
@@ -134,7 +133,7 @@ describe("map parsing", () => {
 				"Wetland",
 			],
 		};
-		const exampleRawMap: IRawMap = {
+		const exampleMap: IMap = {
 			metadata: exampleMetadata,
 			cultures: examples.cultures,
 			burgs: examples.burgs,
@@ -174,80 +173,7 @@ describe("map parsing", () => {
 			// 	expectedMap.regiments.push(military as unknown as IRegiment);
 			// }
 			const parsedMap = parseMapFile(exampleMapFile);
-			expect(parsedMap).toEqual(exampleRawMap);
-		});
-
-		test.skip("computeFullMapFromRawMap()", () => {
-			const computedMap = computeFullMapFromRawMap(exampleRawMap);
-
-			// Cultures
-			const exampleCulturesCsvFilePath = path.resolve(
-				"./src/test/example/cultures.csv",
-			);
-			const exampleCulturesCsvFile = fs.readFileSync(
-				exampleCulturesCsvFilePath,
-				{ encoding: "utf-8" },
-			);
-			const exampleCulturesCsvFileParsed = parseCSV(exampleCulturesCsvFile);
-			for (const culture of computedMap.cultures) {
-				const exampleCulture = exampleCulturesCsvFileParsed.find(
-					({ Id }) => Id === culture.i,
-				);
-				expect(exampleCulture).not.toBeUndefined();
-				// for typing sake
-				if (exampleCulture === undefined) continue;
-				expect(culture.cells).toStrictEqual(exampleCulture.Cells);
-				expect(culture.area).toStrictEqual(exampleCulture["Area mi2"]);
-				expect((culture.urban ?? 0) + (culture.rural ?? 0)).toStrictEqual(
-					exampleCulture.Population,
-				);
-			}
-
-			// Provinces
-			const exampleProvincesCsvFilePath = path.resolve(
-				"./src/test/example/provinces.csv",
-			);
-			const exampleProvincesCsvFile = fs.readFileSync(
-				exampleProvincesCsvFilePath,
-				{ encoding: "utf-8" },
-			);
-			const exampleProvincesCsvFileParsed = parseCSV(exampleProvincesCsvFile);
-			for (const province of computedMap.provinces) {
-				const exampleProvince = exampleProvincesCsvFileParsed.find(
-					({ Id }) => Id === province.i,
-				);
-				expect(exampleProvince).not.toBeUndefined();
-				// for typing sake
-				if (exampleProvince === undefined) continue;
-				expect(province.area).toStrictEqual(exampleProvince["Area mi2"]);
-				expect((province.urban ?? 0) + (province.rural ?? 0)).toStrictEqual(
-					exampleProvince["Total Population"],
-				);
-				expect(province.rural).toStrictEqual(
-					exampleProvince["Rural Population"],
-				);
-				expect(province.urban).toStrictEqual(
-					exampleProvince["Urban Population"],
-				);
-			}
-
-			// Religions
-			const exampleReligionsCsvFilePath = path.resolve(
-				"./src/test/example/religions.csv",
-			);
-			const exampleReligionsCsvFile = fs.readFileSync(
-				exampleReligionsCsvFilePath,
-				{ encoding: "utf-8" },
-			);
-			const exampleReligionsCsvFileParsed = parseCSV(exampleReligionsCsvFile);
-			for (const religion of computedMap.religions) {
-				const exampleReligion = exampleReligionsCsvFileParsed.find(
-					({ Id }) => Id === religion,
-				);
-				expect(exampleReligion).not.toBeUndefined();
-				// for typing sake
-				if (exampleReligion === undefined) continue;
-			}
+			expect(parsedMap).toEqual(exampleMap);
 		});
 	});
 });
