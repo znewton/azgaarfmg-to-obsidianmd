@@ -12,5 +12,6 @@ Convert a .map file from [Azgaar's Fantasy Map Generator](https://azgaar.github.
 ## Usage
 
 1. Generate a fantasy map using [Azgaar's Fantasy Map Generator](https://azgaar.github.io/Fantasy-Map-Generator/)
-2. Export to `machine` (saves a .map file to your Downloads folder)
-3. Run `npm run convert -- --map ~/path/to/fmg.map --out ~/path/to/obsidian-vault`
+1. Go to the "Tools" tab in the top left, then open each of the following "Edit" windows to calculate area and population values: Burgs, Cultures, Provinces (select State = All), States, Religions.
+1. "Save" to `machine` (saves a .map file to your Downloads folder)
+1. Run `npm run convert -- --map ~/path/to/fmg.map --out ~/path/to/obsidian-vault`

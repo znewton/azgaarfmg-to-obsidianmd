@@ -1,0 +1,11 @@
+Id,Name,Color,Cells,Expansionism,Type,Area mi2,Population,Namesbase,Emblems Shape,Origins
+9,Anor (Human),#80b1d3,154,1.1,Hunting,309328,1700546,Human Generic,fantasy5,""
+5,Dail (Human),#c6b9c1,1027,1.3,Generic,2387520,13090317,Human Generic,roman,""
+4,Dulandir (Human),#dababf,172,2.4,Nomadic,439904,1805379,Mongolian,easterling,""
+1,Khazadur (Dwarven),#fb8072,1,2.3,Nomadic,2368,692,Dwarven,erebor,""
+7,Kobold (Goblin),#fdb462,1138,1.2,Generic,2763728,4973685,Goblin,moriaOrc,""
+3,Quenian (Elfish),#bc80bd,521,1.2,Generic,1293568,4825503,Elven,gondor,""
+2,Rohand (Human),#ccebc5,376,2.4,Naval,790240,3075243,Turkish,round,""
+6,Uruk (Orkish),#fccde5,51,2.1,Highland,139808,275487,Orc,urukHai,""
+0,Wildlands,,156,,,423424,0,English,round,""
+8,Yotunn (Giants),#b3de69,727,1.9,Naval,1611856,9020369,Giant,pavise,""

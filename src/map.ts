@@ -1,6 +1,8 @@
 import type {
 	IBiome,
 	IBurg,
+	IMap,
+	IMapMetadata,
 	IMarker,
 	INameBase,
 	INeutralState,
@@ -26,19 +28,25 @@ function isCompatible(fileVersion: string): boolean {
 	);
 }
 
-export function isIRawCulture(obj: unknown): obj is IRawCulture | IWildCulture {
-	const satisfiesWildCulture =
+export function isIWildCulture(obj: unknown): obj is IWildCulture {
+	return (
 		typeof obj === "object" &&
 		typeof (obj as IWildCulture).i === "number" &&
 		typeof (obj as IWildCulture).base === "number" &&
 		typeof (obj as IWildCulture).name === "string" &&
 		Array.isArray((obj as IWildCulture).origins) &&
-		typeof (obj as IWildCulture).shield === "string";
-	if (!satisfiesWildCulture) return false;
-	if ((obj as IRawCulture).i === 0) {
-		return satisfiesWildCulture;
-	}
+		typeof (obj as IWildCulture).shield === "string"
+	);
+}
+
+export function isIRawCulture(obj: unknown): obj is IRawCulture {
 	return (
+		typeof obj === "object" &&
+		typeof (obj as IWildCulture).i === "number" &&
+		typeof (obj as IWildCulture).base === "number" &&
+		typeof (obj as IWildCulture).name === "string" &&
+		Array.isArray((obj as IWildCulture).origins) &&
+		typeof (obj as IWildCulture).shield === "string" &&
 		(obj as IRawCulture).origins.every((v) => typeof v === "number") &&
 		typeof (obj as IRawCulture).center === "number" &&
 		typeof (obj as IRawCulture).code === "string" &&
@@ -172,17 +180,16 @@ export function isIRawProvince(obj: unknown): obj is IRawProvince {
 	);
 }
 
-export function isIRawReligion(
-	obj: unknown,
-): obj is IRawReligion | INoReligion {
-	const satisfiesNoReligion =
+export function isINoReligion(obj: unknown): obj is INoReligion {
+	return (
 		typeof obj === "object" &&
 		typeof (obj as IReligion).i === "number" &&
 		typeof (obj as IReligion).name === "string" &&
-		(obj as IReligion).origins === null;
-	if (satisfiesNoReligion) {
-		return true;
-	}
+		(obj as IReligion).origins === null
+	);
+}
+
+export function isIRawReligion(obj: unknown): obj is IRawReligion {
 	return (
 		typeof obj === "object" &&
 		typeof (obj as IReligion).i === "number" &&
@@ -304,6 +311,75 @@ export function isINameBase(obj: unknown): obj is INameBase {
 	throw new Error("Not Implemented");
 }
 
+export function getMapMetadata(rawMapFile: string): IMapMetadata {
+	const rawLines: string[] = rawMapFile.split("\n");
+	const [
+		rawVersion,
+		rawTip,
+		rawCreateTime,
+		rawSeed,
+		rawWidth,
+		rawHeight,
+		rawId,
+	]: string[] = rawLines[0].split("|");
+	const [
+		rawDistanceUnit,
+		rawDistanceScale,
+		rawAreaUnit,
+		rawHeightUnit,
+		rawHeightExponentInput,
+		rawTemperatureUnit,
+		,
+		,
+		,
+		,
+		,
+		,
+		rawPopulationRate,
+		rawUrbanization,
+		rawMapSizeOutput,
+		rawLatitudeOutput,
+		,
+		,
+		rawPrecipitationOutput,
+		_settings,
+		rawName,
+		rawHideLabels,
+		rawStylePreset,
+		rawRescaleLabels,
+		rawUrbanDensity,
+		rawLongitudeOutput,
+	]: string[] = rawLines[1].split("|");
+	const { latT, latN, latS, lonT, lonW, lonE } = JSON.parse(rawLines[2]);
+	const [
+		_rawBiomesColorsList,
+		_rawBiomesHabitabilityList,
+		rawBiomesList,
+	]: string[] = rawLines[3].split("|");
+	return {
+		version: rawVersion,
+		tip: rawTip,
+		createdTimestamp: new Date(rawCreateTime).getTime(),
+		seed: Number.parseInt(rawSeed),
+		width: Number.parseInt(rawWidth),
+		height: Number.parseInt(rawHeight),
+		id: Number.parseInt(rawId),
+		distanceUnit: rawDistanceUnit,
+		distanceScale: Number.parseInt(rawDistanceScale),
+		areaUnit: rawAreaUnit,
+		heightUnit: rawHeightUnit,
+		temperatureUnit: rawTemperatureUnit,
+		worldName: rawName,
+		totalLatitude: latT,
+		totalLongitude: lonT,
+		latitudeNorth: latN,
+		latitudeSouth: latS,
+		longitudeWest: lonW,
+		longitudeEast: lonE,
+		biomes: rawBiomesList.split(","),
+	};
+}
+
 /**
  * Parse a raw .map file into a usable JS object.
  *
@@ -311,11 +387,11 @@ export function isINameBase(obj: unknown): obj is INameBase {
  * @returns information from the .map file in a more usable {@link IRawMap} format
  */
 export function parseMapFile(rawMapFile: string): IRawMap {
+	const metadata = getMapMetadata(rawMapFile);
 	const rawLines: string[] = rawMapFile.split("\n");
-	const fileVersion = rawLines[0].split("|")[0];
-	if (!isCompatible(fileVersion)) {
+	if (!isCompatible(metadata.version)) {
 		throw new Error(
-			`Incompatible Map Version. Supported: ${CompatibleMapVersions}; Received: ${fileVersion}`,
+			`Incompatible Map Version. Supported: ${CompatibleMapVersions}; Received: ${metadata.version}`,
 		);
 	}
 	const jsonLines: unknown[] = [];
@@ -334,6 +410,7 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 		`Found ${unknownLines.length} lines of Unknown info in map file.`,
 	);
 	const map: IRawMap = {
+		metadata,
 		cultures: [],
 		burgs: [],
 		states: [],
@@ -357,7 +434,7 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 		// to track those types separately, we can just push each type-checked
 		// object to its appropriate IMap property.
 		for (const obj of jsonLine as unknown[]) {
-			if (isIRawCulture(obj)) {
+			if (isIRawCulture(obj) || isIWildCulture(obj)) {
 				map.cultures.push(obj);
 			} else if (isIBurg(obj)) {
 				map.burgs.push(obj);
@@ -366,7 +443,7 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 				// map.regiments.push(...((obj as IState).military ?? []));
 			} else if (isIRawProvince(obj)) {
 				map.provinces.push(obj);
-			} else if (isIRawReligion(obj)) {
+			} else if (isIRawReligion(obj) || isINoReligion(obj)) {
 				map.religions.push(obj);
 			} else if (isIRiver(obj)) {
 				map.rivers.push(obj);
@@ -380,5 +457,31 @@ export function parseMapFile(rawMapFile: string): IRawMap {
 		}
 	}
 
+	return map;
+}
+
+/**
+ * Returns full map data with computed information.
+ * @param rawMap - raw data parsed from .map file
+ */
+export function computeFullMapFromRawMap(rawMap: IRawMap): IMap {
+	const map: IMap = {
+		metadata: rawMap.metadata,
+		cultures: [],
+		burgs: [...rawMap.burgs],
+		states: [...rawMap.states],
+		regiments: [...rawMap.regiments],
+		provinces: [],
+		religions: [],
+		rivers: [...rawMap.rivers],
+		markers: [...rawMap.markers],
+		routes: [...rawMap.routes],
+		biomes: [...rawMap.biomes],
+		notes: [...rawMap.notes],
+		nameBases: [...rawMap.nameBases],
+	};
+
+	for (const rawReligion of rawMap.religions) {
+	}
 	return map;
 }

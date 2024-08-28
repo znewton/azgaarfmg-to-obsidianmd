@@ -1,7 +1,90 @@
+export interface IMapMetadata {
+	/**
+	 * File version (e.g. 1.99.03)
+	 */
+	version: string;
+	/**
+	 * Tip telling the opener of the file how to load it.
+	 */
+	tip: string;
+	/**
+	 * Date created as Milliseconds since epoch.
+	 */
+	createdTimestamp: number;
+	/**
+	 * Unique seed number used for generating towns and such.
+	 */
+	seed: number;
+	/**
+	 * Original width of the map in pixels.
+	 */
+	width: number;
+	/**
+	 * Original height of the map in pixels.
+	 */
+	height: number;
+	/**
+	 * Unique id number (as far as I can tell).
+	 */
+	id: number;
+	/**
+	 * Unit for labeling distances (e.g. mi, km)
+	 */
+	distanceUnit: string;
+	/**
+	 * Distance covered by 1 pixel (e.g. 4 means 1 pixel is 4 of distanceUnit).
+	 */
+	distanceScale: number;
+	/**
+	 * Unit for labeling areas (e.g. square)
+	 */
+	areaUnit: string;
+	/**
+	 * Unit for labeling heights (e.g. ft, m)
+	 */
+	heightUnit: string;
+	/**
+	 * Unit for labeling temperature (e.g. °F, °C)
+	 */
+	temperatureUnit: string;
+	/**
+	 * Name of the world shown in the map.
+	 */
+	worldName: string;
+	/**
+	 * Total Latitude displayed by map.
+	 */
+	totalLatitude: number;
+	/**
+	 * Total Longitude displayed by map.
+	 */
+	totalLongitude: number;
+	/**
+	 * North latitude bound.
+	 */
+	latitudeNorth: number;
+	/**
+	 * South latitude bound.
+	 */
+	latitudeSouth: number;
+	/**
+	 * West longitude bound.
+	 */
+	longitudeWest: number;
+	/**
+	 * East longitude bound.
+	 */
+	longitudeEast: number;
+	/**
+	 * List of biome names.
+	 */
+	biomes: string[];
+}
+
 /**
- * ICulture as defined in the .map file. Some fields must be interpreted from others.
+ * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Cultures
  */
-export interface IRawCulture {
+export interface ICulture {
 	/**
 	 * culture id, always equal to the array index
 	 */
@@ -45,23 +128,6 @@ export interface IRawCulture {
 	 */
 	type: string;
 	/**
-	 * true if culture is locked (not affected by regeneration)
-	 */
-	lock?: boolean;
-	/**
-	 * true if culture is removed
-	 */
-	removed?: boolean;
-}
-export type IWildCulture = Omit<
-	IRawCulture,
-	"center" | "code" | "color" | "expansionism" | "type"
->;
-/**
- * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Cultures
- */
-export interface ICulture extends IRawCulture {
-	/**
 	 * culture area in pixels
 	 */
 	area: number;
@@ -77,7 +143,20 @@ export interface ICulture extends IRawCulture {
 	 * urban (burg) population of cells assigned to culture. In population points
 	 */
 	urban: number;
+	/**
+	 * true if culture is locked (not affected by regeneration)
+	 */
+	lock?: boolean;
+	/**
+	 * true if culture is removed
+	 */
+	removed?: boolean;
 }
+export type IRawCulture = Omit<ICulture, "area" | "cells" | "rural" | "urban">;
+export type IWildCulture = Omit<
+	IRawCulture,
+	"center" | "code" | "color" | "expansionism" | "type"
+>;
 
 /**
  * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#Burgs
@@ -767,6 +846,7 @@ export interface INameBase {
  * The Map as directly parsed from the .map file
  */
 export interface IRawMap {
+	metadata: IMapMetadata;
 	cultures: (IRawCulture | IWildCulture)[];
 	burgs: IBurg[];
 	states: (IState | INeutralState)[];
@@ -782,12 +862,13 @@ export interface IRawMap {
 }
 
 export interface IMap {
-	cultures: ICulture[];
+	metadata: IMapMetadata;
+	cultures: (IWildCulture & Partial<ICulture>)[];
 	burgs: IBurg[];
-	states: IState[];
+	states: (INeutralState & Partial<IState>)[];
 	regiments: IRegiment[];
 	provinces: IProvince[];
-	religions: (IReligion | INoReligion)[];
+	religions: (INoReligion & Partial<IReligion>)[];
 	rivers: IRiver[];
 	markers: IMarker[];
 	routes: IRoute[];
