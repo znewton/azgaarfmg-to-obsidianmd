@@ -1,7 +1,7 @@
 {
 	"name": "azgaarfmg-to-obsidianmd",
 	"version": "0.0.1",
-	"description": "Convert a .map file from Azgaar's Fantasy Map Generator to an Obsidian Vault based on Josh Plunkett's Obsidian for TTRPGs",
+	"description": "Convert a .json file from Azgaar's Fantasy Map Generator to an Obsidian Vault based on Josh Plunkett's Obsidian for TTRPGs",
 	"main": "dist/index.js",
 	"scripts": {
 		"build": "tsc",

@@ -1,4 +1,4 @@
-export interface IMapSettings {
+export interface IMapFileSettings {
 	pinNotes: boolean;
 	winds: number[];
 	/**
@@ -41,7 +41,7 @@ export interface IMapSettings {
 
 export interface IMapMetadata
 	extends Pick<
-		IMapSettings,
+		IMapFileSettings,
 		"villageMaxPopulation" | "year" | "era" | "eraShort"
 	> {
 	/**
@@ -896,4 +896,474 @@ export interface IMap {
 	biomes: IBiome[];
 	notes: INote[];
 	nameBases: INameBase[];
+}
+
+// ---
+// JSON Map Version Below
+// ---
+
+export interface IMapInfo {
+	/**
+	 * Unique seed number used for generating towns and such.
+	 */
+	seed: string;
+	/**
+	 * Original width of the map in pixels.
+	 */
+	width: number;
+	/**
+	 * Original height of the map in pixels.
+	 */
+	height: number;
+	/**
+	 * File version (e.g. 1.99.03)
+	 */
+	version: string;
+	/**
+	 * Note indicating where file was generated from.
+	 */
+	description: string;
+	/**
+	 * Date created as Milliseconds since epoch.
+	 */
+	exportedAt: string;
+	/**
+	 * Name of the map/world.
+	 */
+	mapName: string;
+	/**
+	 * Unique identifier for this version of the map.
+	 */
+	mapId: number;
+}
+
+export interface IMapSettingsOptions {
+	pinNotes: boolean;
+	winds: number[];
+	/**
+	 * Temperature at the equator.
+	 */
+	temperatureEquator: number;
+	/**
+	 * Temperature at the North Pole.
+	 */
+	temperatureNorthPole: number;
+	/**
+	 * Temperature at the South Pole.
+	 */
+	temperatureSouthPole: number;
+	stateLabelsMode: string;
+	showBurgPreview: boolean;
+	/**
+	 * Max population of a Burg to be considered a village.
+	 * If population is greater, it is considered a city.
+	 */
+	villageMaxPopulation: number;
+	/**
+	 * Current year in the world's calendar.
+	 */
+	year: number;
+	/**
+	 * Current Era in the worlds timeline.
+	 */
+	era: string;
+	/**
+	 * An abbreviated version of the Era (e.g. Rocleston Era -> RE)
+	 * to be used when listing a year in an era (e.g. 1008 RE).
+	 */
+	eraShort: string;
+	/**
+	 * List of military settings for simulating combat.
+	 */
+	military: object[];
+}
+
+export interface IMapSettings {
+	/**
+	 * Unit for labeling distances (e.g. mi, km)
+	 */
+	distanceUnit: string;
+	/**
+	 * Distance covered by 1 pixel (e.g. 4 means 1 pixel is 4 of distanceUnit).
+	 */
+	distanceScale: number;
+	/**
+	 * Unit for labeling areas (e.g. square)
+	 */
+	areaUnit: string;
+	/**
+	 * Unit for labeling heights (e.g. ft, m)
+	 */
+	heightUnit: string;
+	heightExponent: number;
+	/**
+	 * Unit for labeling temperature (e.g. °F, °C)
+	 */
+	temperatureScale: string;
+	/**
+	 * Number of people per population point.
+	 */
+	populationRate: number;
+	/**
+	 * Name of the world shown in the map.
+	 */
+	mapName: string;
+	/**
+	 * Options used when generating the map.
+	 */
+	options: IMapSettingsOptions;
+	/**
+	 * Number parsable string. ???
+	 */
+	urbanization: string;
+	/**
+	 * Number parsable string. ???
+	 */
+	mapSize: string;
+	/**
+	 * Number parsable string. Indicates central latitude of map.
+	 */
+	latitude: string;
+	/**
+	 * Number parsable string. Indicates central longitude of map.
+	 */
+	longitude: string;
+	/**
+	 * Number parsable string. Precipitation factor?
+	 */
+	prec: string;
+	hideLabels: boolean;
+	stylePreset: string;
+	rescaleLabels: boolean;
+	urbanDensity: 10;
+}
+
+interface IMapCoordinates {
+	/**
+	 * Total Latitude displayed by map.
+	 */
+	latT: number;
+	/**
+	 * Total Longitude displayed by map.
+	 */
+	lonT: number;
+	/**
+	 * North latitude bound.
+	 */
+	latN: number;
+	/**
+	 * South latitude bound.
+	 */
+	latS: number;
+	/**
+	 * West longitude bound.
+	 */
+	lonW: number;
+	/**
+	 * East longitude bound.
+	 */
+	lonE: number;
+}
+
+/**
+ * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#specific-cells-data
+ */
+export interface IPackCell {
+	/**
+	 * Cell Id/index.
+	 */
+	i: number;
+	/**
+	 * Vertex indices.
+	 */
+	v: number[];
+	/**
+	 * Adjacent cell indices.
+	 */
+	c: number[];
+	/**
+	 * Cell's coordinates after repacking, rounded to 2 decimals.
+	 */
+	p: [number, number];
+	/**
+	 * Grid cell parent index.
+	 * Use this to find associated grid cell for determining temperature.
+	 */
+	g: number;
+	/**
+	 * Elevation from 0-100. 20 is minimal land elevation.
+	 */
+	h: number;
+	/**
+	 * Feature index.
+	 */
+	f: number;
+	/**
+	 * distance field.
+	 * 1, 2, ... - land cells
+	 * -1, -2, ... - water cells
+	 * 0 - unmarked cell
+	 */
+	t: number;
+	/**
+	 * River index.
+	 */
+	r: number;
+	/**
+	 * Flux amount.
+	 * HDefines how much water flows through the cell.
+	 */
+	fl: number;
+	/**
+	 * Score.
+	 * sed to define best cells to place a burg.
+	 */
+	s: number;
+	/**
+	 * Area in pixels.
+	 */
+	area: number;
+	/**
+	 * Haven index.
+	 * Coastal cells have haven cells defined for route building.
+	 */
+	haven: number;
+	/**
+	 * Harbor Score.
+	 * Shows how many water cells are adjacent.
+	 */
+	harbor: number;
+	/**
+	 * Flux amount in confluences.
+	 * Confluences are cells where rivers meet each other.
+	 */
+	conf: number;
+	/**
+	 * Biome index.
+	 */
+	biome: number;
+	/**
+	 * Population in population points.
+	 * Multiply by populationRate.
+	 */
+	pop: number;
+	/**
+	 * Culture index.
+	 */
+	culture: number;
+	/**
+	 * Burg index.
+	 */
+	burg: number;
+	/**
+	 * State index.
+	 */
+	state: number;
+	/**
+	 * Religion index.
+	 */
+	religion: number;
+	/**
+	 * Province index.
+	 */
+	province: number;
+}
+
+/**
+ * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#voronoi-data
+ */
+export interface IPackVertex {
+	/**
+	 * Vertex index.
+	 */
+	i: number;
+	/**
+	 * Vertex coordinates [x, y] integers
+	 */
+	p: [number, number];
+	/**
+	 * Adjacent vertex indexes.
+	 * Bordering vertices only have 2, but the third is -1.
+	 */
+	v: [number, number, number];
+	/**
+	 * Adjacent cell indexes.
+	 */
+	c: [number, number, number];
+}
+
+/**
+ * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#features-data
+ */
+export interface IPackFeature {
+	/**
+	 * Feature Index
+	 */
+	i: number;
+	/**
+	 * If feature is land (height >= 20)
+	 */
+	land: boolean;
+	/**
+	 * If feature touches map border.
+	 */
+	border: boolean;
+	/**
+	 * Feature type: ocean, island, lake.
+	 */
+	type: string;
+	/**
+	 * Number of cells within feature.
+	 */
+	cells: number;
+	/**
+	 * Index of the first (top left) cell in feature.
+	 */
+	firstCell: number;
+	/**
+	 * Subtype depending on type.
+	 * Ocean => ocean
+	 * Land => continent
+	 */
+	group: string;
+	/**
+	 * Area of the feature in pixels.
+	 */
+	area?: number;
+	/**
+	 * List of perimeter vertices around the feature.
+	 */
+	vertices?: number[];
+	/**
+	 * Feature name.
+	 * Only available for lake type.
+	 */
+	name?: string;
+}
+
+/**
+ * Biomes as arrays.
+ * Each biome is in order. Example: i[0] is for the same biome as name[0].
+ * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#biomes
+ */
+export interface IBiomesData {
+	/**
+	 * Biome Ids.
+	 */
+	i: number[];
+	/**
+	 * Biome names.
+	 */
+	name: string[];
+	/**
+	 * Biome colors in hex or link to hatch pattern
+	 */
+	color: string[];
+	/**
+	 * Biome matrix.
+	 * 2d Matrix used to define cell biome by temperature and moisture.
+	 * Columns contain temperature data going from > 19 °C to < -4 °C.
+	 * In reality, columns are 0-25, so must be adjusted by -5.
+	 * Rows contain data for 5 moisture bands from the drier to the wettest one.
+	 *
+	 * Yes, Matrix is misspelled in the data.
+	 */
+	biomesMartix: number[][];
+	/**
+	 * Biome movement cost from 0-5000.
+	 * Used for determining culture, state, and religion growth.
+	 * 0 means spreading to this biome costs nothing, higher is more costly.
+	 */
+	cost: number[];
+	/**
+	 * Biome habitability score from 0-100.
+	 * 0 means biome is uninhabitable, higher is more easily habitable.
+	 */
+	habitability: number[];
+	/**
+	 * Non-weighted array of icons for each biome.
+	 * Used for "relief" icons rendering.
+	 * During rendering, random icons are chosen from the array with no preference.
+	 */
+	icons: string[][];
+	/**
+	 * Icon density from 0-150.
+	 * Defines how packed icons can be for the biome.
+	 */
+	iconsDensity: number[];
+}
+
+export interface IGridCell {
+	/**
+	 * Cell index.
+	 * Matches to IPackCell.g
+	 */
+	i: number;
+	/**
+	 * Indexes of vertices.
+	 */
+	v: number[];
+	/**
+	 * Indexes of adjacent cells.
+	 */
+	c: number[];
+	/**
+	 * Whether cell borders map edge.
+	 * 1 if true, 0 if false.
+	 */
+	b: number;
+	/**
+	 * Feature index.
+	 */
+	f: number;
+	/**
+	 * Distance from water level. (See https://prideout.net/blog/distance_fields/)
+	 * 1, 2, ... - land cells
+	 * -1, -2, ... - water cells
+	 * 0 - unmarked cell
+	 */
+	t: number;
+	/**
+	 * Elevation in [0, 100] range, where 20 is the minimal land elevation.
+	 */
+	h: number;
+	/**
+	 * Cell temperature in Celsius.
+	 */
+	temp: number;
+	/**
+	 * Cell precipitation in unspecified scale.
+	 * Higher number means more precipitation.
+	 */
+	prec: number;
+}
+
+export interface IJsonMap {
+	info: IMapInfo;
+	settings: IMapSettings;
+	mapCoordinates: IMapCoordinates;
+	pack: {
+		cells: IPackCell[];
+		vertices: IPackVertex[];
+		features: IPackFeature[];
+		cultures: (IWildCulture & Partial<ICulture>)[];
+		burgs: IBurg[];
+		states: (INeutralState & Partial<IState>)[];
+		provinces: IProvince[];
+		religions: (INoReligion & Partial<IReligion>)[];
+		rivers: IRiver[];
+		markers: IMarker[];
+		routes: IRoute[];
+	};
+	/**
+	 * Not very useful for markdown purposes.
+	 * We can use Pack cells instead for most things except for temperature.
+	 * Source: https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Data-model#basic-objects
+	 */
+	grid: {
+		cells: IGridCell[];
+		// Contains other info, but we don't care about it.
+	};
+	notes: INote;
+	biomesData: IBiomesData;
 }

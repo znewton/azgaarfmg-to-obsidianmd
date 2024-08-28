@@ -23,14 +23,14 @@ function resolvePath(filepath: string): string {
 		.showHelpOnFail(false)
 		.command(
 			"convert",
-			"Convert a .map file to a Markdown workspace.",
+			"Convert a .json file to a Markdown workspace.",
 			(y) =>
 				y
 					.option("map", {
 						alias: "m",
 						type: "string",
 						description:
-							"Path to the .map file, resolved from current working directory if relative.",
+							"Path to the .json file, resolved from current working directory if relative.",
 						demandOption: true,
 					})
 					.option("outputDir", {
@@ -41,8 +41,8 @@ function resolvePath(filepath: string): string {
 						demandOption: true,
 					})
 					.example(
-						"$0 -m ~/Downloads/MyMap.map -o ~/Documents/MyObsidianVault",
-						"Creates a markdown files in ~/Documents/MyObsidianVault based on ~/Downloads/MyMap.map",
+						"$0 -m ~/Downloads/MyMap.json -o ~/Documents/MyObsidianVault",
+						"Creates a markdown files in ~/Documents/MyObsidianVault based on ~/Downloads/MyMap.json",
 					),
 			async (argv) => {
 				const map = resolvePath(argv.map);

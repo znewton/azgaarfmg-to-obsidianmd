@@ -4,7 +4,7 @@ import type {
 	ICulture,
 	IMap,
 	IMapMetadata,
-	IMapSettings,
+	IMapFileSettings,
 	IMarker,
 	INameBase,
 	INeutralState,
@@ -350,7 +350,7 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 		rawUrbanDensity,
 		rawLongitudeOutput,
 	]: string[] = rawLines[1].split("|");
-	const parsedSettings: IMapSettings = JSON.parse(rawSettings);
+	const parsedSettings: IMapFileSettings = JSON.parse(rawSettings);
 	const { latT, latN, latS, lonT, lonW, lonE } = JSON.parse(rawLines[2]);
 	const [
 		_rawBiomesColorsList,
@@ -389,6 +389,7 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 export function getMapCells(rawMapFile: string): void {}
 
 /**
+ * @deprecated - Using JSON now
  * Parse a raw .map file into a usable JS object.
  *
  * @param rawMapFile - String representing file contents of FMG .map file
