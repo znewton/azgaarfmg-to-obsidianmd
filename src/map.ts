@@ -368,6 +368,7 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 		areaUnit: rawAreaUnit,
 		heightUnit: rawHeightUnit,
 		temperatureUnit: rawTemperatureUnit,
+		populationRate: Number.parseInt(rawPopulationRate),
 		worldName: rawName,
 		totalLatitude: latT,
 		totalLongitude: lonT,
@@ -423,6 +424,25 @@ export function parseMapFile(rawMapFile: string): IMap {
 		notes: [],
 		nameBases: [],
 	};
+
+	const nameBaseLine = rawLines.find(
+		(line: string) =>
+			line.match(/^([\w ]+\|\d+\|\d+\|\w*\|[\d.]+\|\/?)+$/) !== null,
+	);
+	if (nameBaseLine) {
+		const rawNameBases = nameBaseLine.split("/");
+		for (const [i, rawNameBase] of rawNameBases.entries()) {
+			const [name, min, max, d, m] = rawNameBase.split("|");
+			map.nameBases.push({
+				i,
+				name,
+				min: Number.parseInt(min),
+				max: Number.parseInt(max),
+				d,
+				m: Number.parseFloat(m),
+			});
+		}
+	}
 
 	for (const jsonLine of jsonLines) {
 		if (!Array.isArray(jsonLine)) {

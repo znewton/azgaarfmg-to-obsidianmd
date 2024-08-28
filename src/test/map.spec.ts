@@ -20,7 +20,6 @@ import {
 	isIReligion,
 } from "../map";
 import type { IMapMetadata, IMap } from "../definitions";
-import { parseCSV } from "./example/utils";
 
 describe("map parsing", () => {
 	describe("type guards", () => {
@@ -110,6 +109,7 @@ describe("map parsing", () => {
 			areaUnit: "square",
 			heightUnit: "ft",
 			temperatureUnit: "°F",
+			populationRate: 1000,
 			worldName: "Koberzar",
 			totalLatitude: 59.4,
 			totalLongitude: 103.3,
@@ -146,7 +146,7 @@ describe("map parsing", () => {
 			routes: examples.routes,
 			biomes: [],
 			notes: examples.notes,
-			nameBases: [],
+			nameBases: examples.nameBases,
 		};
 		test("getMapMetadata()", () => {
 			const exampleMapFilePath = path.resolve(

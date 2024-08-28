@@ -31253,5 +31253,78 @@
 			"name": "Silver sea route",
 			"length": 26.991947174072266
 		}
+	],
+	"nameBases": [
+		{ "i": 0, "name": "German", "min": 5, "max": 12, "d": "lt", "m": 0 },
+		{ "i": 1, "name": "English", "min": 6, "max": 11, "d": "", "m": 0.1 },
+		{ "i": 2, "name": "French", "min": 5, "max": 13, "d": "nlrs", "m": 0.1 },
+		{ "i": 3, "name": "Italian", "min": 5, "max": 12, "d": "cltr", "m": 0.1 },
+		{ "i": 4, "name": "Castillian", "min": 5, "max": 11, "d": "lr", "m": 0 },
+		{ "i": 5, "name": "Ruthenian", "min": 5, "max": 10, "d": "", "m": 0 },
+		{ "i": 6, "name": "Nordic", "min": 6, "max": 10, "d": "kln", "m": 0.1 },
+		{ "i": 7, "name": "Greek", "min": 5, "max": 11, "d": "s", "m": 0.1 },
+		{ "i": 8, "name": "Roman", "min": 6, "max": 11, "d": "ln", "m": 0.1 },
+		{ "i": 9, "name": "Finnic", "min": 5, "max": 11, "d": "akiut", "m": 0 },
+		{ "i": 10, "name": "Korean", "min": 5, "max": 11, "d": "", "m": 0 },
+		{ "i": 11, "name": "Chinese", "min": 5, "max": 10, "d": "", "m": 0 },
+		{ "i": 12, "name": "Japanese", "min": 4, "max": 10, "d": "", "m": 0 },
+		{ "i": 13, "name": "Portuguese", "min": 5, "max": 11, "d": "", "m": 0.1 },
+		{ "i": 14, "name": "Nahuatl", "min": 6, "max": 13, "d": "l", "m": 0 },
+		{ "i": 15, "name": "Hungarian", "min": 6, "max": 13, "d": "", "m": 0.1 },
+		{ "i": 16, "name": "Turkish", "min": 4, "max": 10, "d": "", "m": 0 },
+		{ "i": 17, "name": "Berber", "min": 4, "max": 10, "d": "s", "m": 0.2 },
+		{ "i": 18, "name": "Arabic", "min": 4, "max": 9, "d": "ae", "m": 0.2 },
+		{ "i": 19, "name": "Inuit", "min": 5, "max": 15, "d": "alutsn", "m": 0 },
+		{ "i": 20, "name": "Basque", "min": 4, "max": 11, "d": "r", "m": 0.1 },
+		{ "i": 21, "name": "Nigerian", "min": 4, "max": 10, "d": "", "m": 0.3 },
+		{ "i": 22, "name": "Celtic", "min": 4, "max": 12, "d": "nld", "m": 0 },
+		{
+			"i": 23,
+			"name": "Mesopotamian",
+			"min": 4,
+			"max": 9,
+			"d": "srpl",
+			"m": 0.1
+		},
+		{ "i": 24, "name": "Iranian", "min": 5, "max": 11, "d": "", "m": 0.1 },
+		{ "i": 25, "name": "Hawaiian", "min": 5, "max": 10, "d": "auo", "m": 1 },
+		{ "i": 26, "name": "Karnataka", "min": 5, "max": 11, "d": "tnl", "m": 0 },
+		{ "i": 27, "name": "Quechua", "min": 6, "max": 12, "d": "l", "m": 0 },
+		{ "i": 28, "name": "Swahili", "min": 4, "max": 9, "d": "", "m": 0 },
+		{ "i": 29, "name": "Vietnamese", "min": 3, "max": 12, "d": "", "m": 1 },
+		{ "i": 30, "name": "Cantonese", "min": 5, "max": 11, "d": "", "m": 0 },
+		{ "i": 31, "name": "Mongolian", "min": 5, "max": 12, "d": "aou", "m": 0.3 },
+		{
+			"i": 32,
+			"name": "Human Generic",
+			"min": 6,
+			"max": 11,
+			"d": "peolst",
+			"m": 0
+		},
+		{ "i": 33, "name": "Elven", "min": 6, "max": 12, "d": "lenmsrg", "m": 0 },
+		{
+			"i": 34,
+			"name": "Dark Elven",
+			"min": 6,
+			"max": 14,
+			"d": "nrslamg",
+			"m": 0.2
+		},
+		{ "i": 35, "name": "Dwarven", "min": 4, "max": 11, "d": "dk", "m": 0 },
+		{ "i": 36, "name": "Goblin", "min": 4, "max": 9, "d": "eag", "m": 0 },
+		{ "i": 37, "name": "Orc", "min": 4, "max": 8, "d": "gzrcu", "m": 0 },
+		{ "i": 38, "name": "Giant", "min": 5, "max": 10, "d": "kdtng", "m": 0 },
+		{
+			"i": 39,
+			"name": "Draconic",
+			"min": 6,
+			"max": 14,
+			"d": "aliuszrox",
+			"m": 0
+		},
+		{ "i": 40, "name": "Arachnid", "min": 4, "max": 10, "d": "erlsk", "m": 0 },
+		{ "i": 41, "name": "Serpents", "min": 5, "max": 11, "d": "slrk", "m": 0 },
+		{ "i": 42, "name": "Levantine", "min": 4, "max": 12, "d": "ankprs", "m": 0 }
 	]
 }

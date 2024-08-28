@@ -48,6 +48,10 @@ export interface IMapMetadata {
 	 */
 	temperatureUnit: string;
 	/**
+	 * Number of people per population point.
+	 */
+	populationRate: number;
+	/**
 	 * Name of the world shown in the map.
 	 */
 	worldName: string;
@@ -812,7 +816,7 @@ export interface INameBase {
 	/**
 	 * long string containing comma-separated list of names
 	 */
-	b: string;
+	b?: string;
 	/**
 	 * recommended minimal length of generated names. Generator will adding new syllables until min length is reached
 	 */
