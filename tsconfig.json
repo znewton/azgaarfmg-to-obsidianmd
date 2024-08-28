@@ -3,7 +3,8 @@
 	"compilerOptions": {
 		"preserveConstEnums": true,
 		"outDir": "dist",
-		"resolveJsonModule": true
+		"resolveJsonModule": true,
+		"strictNullChecks": true
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"]

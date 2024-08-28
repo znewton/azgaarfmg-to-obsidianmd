@@ -1,6 +1,13 @@
 import fs from "node:fs/promises";
 import path from "node:path";
-import type { IBurg, ICulture, IJsonMap, IJsonMapEx } from "./definitions";
+import type {
+	IBurg,
+	ICulture,
+	IJsonMap,
+	IJsonMapEx,
+	IWildCulture,
+} from "./definitions";
+import { isValidWildCulture } from "./validation";
 
 /**
  * Make a directory at the given path, as well as any necessary parent directories.
@@ -9,6 +16,8 @@ import type { IBurg, ICulture, IJsonMap, IJsonMapEx } from "./definitions";
  * @param path - Directory Path
  */
 const mkdirSafe = async (path: string) => fs.mkdir(path, { recursive: true });
+
+const CustomContentString = "%% CUSTOM-START %%\n%% CUSTOM-END %%";
 
 export interface IPath {
 	/**
@@ -129,8 +138,8 @@ export function readableNumber(num: number): string {
 }
 
 function computeAreaFromPixels(areaInPixels: number, map: IJsonMap): number {
-	return (
-		areaInPixels * (map.settings.distanceScale * map.settings.distanceScale)
+	return Math.round(
+		areaInPixels * (map.settings.distanceScale * map.settings.distanceScale),
 	);
 }
 
@@ -151,11 +160,12 @@ function computePopulation(
 	map: IJsonMap,
 ): { total: number; rural: number; urban: number } {
 	return {
-		total:
+		total: Math.round(
 			(ruralPopulationPoints + urbanPopulationPoints) *
-			map.settings.populationRate,
-		urban: urbanPopulationPoints * map.settings.populationRate,
-		rural: ruralPopulationPoints * map.settings.populationRate,
+				map.settings.populationRate,
+		),
+		urban: Math.round(urbanPopulationPoints * map.settings.populationRate),
+		rural: Math.round(ruralPopulationPoints * map.settings.populationRate),
 	};
 }
 
@@ -247,6 +257,8 @@ ${propertyListToMd({
 	Area: readableArea(culture.area, map),
 	Population: `${populationStrings.total} (${populationStrings.urban} Urban, ${populationStrings.rural} Rural)`,
 })}
+
+${CustomContentString}
 `;
 	return {
 		fileName,
