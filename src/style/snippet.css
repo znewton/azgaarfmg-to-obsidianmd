@@ -1,0 +1,6 @@
+img[alt^="floatright"] {
+    float: right;
+}
+img[alt^="floatleft"] {
+    float: left;
+}

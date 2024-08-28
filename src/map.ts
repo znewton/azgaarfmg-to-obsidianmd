@@ -4,6 +4,7 @@ import type {
 	ICulture,
 	IMap,
 	IMapMetadata,
+	IMapSettings,
 	IMarker,
 	INameBase,
 	INeutralState,
@@ -341,7 +342,7 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 		,
 		,
 		rawPrecipitationOutput,
-		_settings,
+		rawSettings,
 		rawName,
 		rawHideLabels,
 		rawStylePreset,
@@ -349,6 +350,7 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 		rawUrbanDensity,
 		rawLongitudeOutput,
 	]: string[] = rawLines[1].split("|");
+	const parsedSettings: IMapSettings = JSON.parse(rawSettings);
 	const { latT, latN, latS, lonT, lonW, lonE } = JSON.parse(rawLines[2]);
 	const [
 		_rawBiomesColorsList,
@@ -377,8 +379,14 @@ export function getMapMetadata(rawMapFile: string): IMapMetadata {
 		longitudeWest: lonW,
 		longitudeEast: lonE,
 		biomes: rawBiomesList.split(","),
+		villageMaxPopulation: parsedSettings.villageMaxPopulation,
+		era: parsedSettings.era,
+		eraShort: parsedSettings.eraShort,
+		year: parsedSettings.year,
 	};
 }
+
+export function getMapCells(rawMapFile: string): void {}
 
 /**
  * Parse a raw .map file into a usable JS object.
@@ -452,6 +460,7 @@ export function parseMapFile(rawMapFile: string): IMap {
 		// of one type, but rather than doing something complicated
 		// to track those types separately, we can just push each type-checked
 		// object to its appropriate IMap property.
+		// This also happens to address the odd cases of empty objects or raw values.
 		for (const obj of jsonLine as unknown[]) {
 			if (isICulture(obj) || isIWildCulture(obj)) {
 				map.cultures.push(obj);
@@ -459,7 +468,7 @@ export function parseMapFile(rawMapFile: string): IMap {
 				map.burgs.push(obj);
 			} else if (isIState(obj)) {
 				map.states.push(obj);
-				// map.regiments.push(...((obj as IState).military ?? []));
+				// map.regiments.push(...(obj.military ?? []));
 			} else if (isIProvince(obj)) {
 				map.provinces.push(obj);
 			} else if (isIReligion(obj) || isINoReligion(obj)) {

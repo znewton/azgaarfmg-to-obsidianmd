@@ -6,6 +6,8 @@
 	"scripts": {
 		"build": "tsc",
 		"convert": "node dist/index.js convert",
+		"lint": "biome lint",
+		"format": "biome format",
 		"test": "jest"
 	},
 	"repository": {

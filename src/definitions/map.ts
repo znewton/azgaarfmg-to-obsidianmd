@@ -1,4 +1,49 @@
-export interface IMapMetadata {
+export interface IMapSettings {
+	pinNotes: boolean;
+	winds: number[];
+	/**
+	 * Temperature at the equator.
+	 */
+	temperatureEquator: number;
+	/**
+	 * Temperature at the North Pole.
+	 */
+	temperatureNorthPole: number;
+	/**
+	 * Temperature at the South Pole.
+	 */
+	temperatureSouthPole: number;
+	stateLabelsMode: string;
+	showBurgPreview: boolean;
+	/**
+	 * Max population of a Burg to be considered a village.
+	 * If population is greater, it is considered a city.
+	 */
+	villageMaxPopulation: number;
+	/**
+	 * Current year in the world's calendar.
+	 */
+	year: number;
+	/**
+	 * Current Era in the worlds timeline.
+	 */
+	era: string;
+	/**
+	 * An abbreviated version of the Era (e.g. Rocleston Era -> RE)
+	 * to be used when listing a year in an era (e.g. 1008 RE).
+	 */
+	eraShort: string;
+	/**
+	 * List of military settings for simulating combat.
+	 */
+	military: object[];
+}
+
+export interface IMapMetadata
+	extends Pick<
+		IMapSettings,
+		"villageMaxPopulation" | "year" | "era" | "eraShort"
+	> {
 	/**
 	 * File version (e.g. 1.99.03)
 	 */

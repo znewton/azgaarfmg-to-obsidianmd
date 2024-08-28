@@ -132,6 +132,10 @@ describe("map parsing", () => {
 				"Glacier",
 				"Wetland",
 			],
+			villageMaxPopulation: 2000,
+			year: 1008,
+			era: "Rocleston Era",
+			eraShort: "RE",
 		};
 		const exampleMap: IMap = {
 			metadata: exampleMetadata,
