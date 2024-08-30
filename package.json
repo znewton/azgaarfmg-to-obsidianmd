@@ -14,7 +14,13 @@
 		"type": "git",
 		"url": "git+https://github.com/znewton/azgaarfmg-to-obsidianmd.git"
 	},
-	"keywords": ["JS", "ObsidianMD", "TTRPG", "FantasyMap", "WorldBuilding"],
+	"keywords": [
+		"JS",
+		"ObsidianMD",
+		"TTRPG",
+		"FantasyMap",
+		"WorldBuilding"
+	],
 	"author": "znewton",
 	"license": "GPL-3.0-or-later",
 	"bugs": {
@@ -33,6 +39,7 @@
 		"typescript": "^5.5.4"
 	},
 	"dependencies": {
+		"yaml": "^2.5.0",
 		"yargs": "^17.7.2"
 	}
 }

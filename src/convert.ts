@@ -1,18 +1,50 @@
 import fs from "node:fs/promises";
-import type { IBiome, ICulture, IJsonMap, IJsonMapEx } from "./definitions";
-import { buildBiomes } from "./mapJson";
-import { isValidJsonMap } from "./validation";
+import type {
+	IBiome,
+	IBurg,
+	ICulture,
+	IJsonMap,
+	IJsonMapEx,
+	IWildCulture,
+} from "./definitions";
 import {
-	burgToMd,
-	createVaultDirectories,
-	cultureToMd,
+	buildBiomes,
+	computeAreaFromPixels,
+	computePopulation,
+	getBiomeById,
+	getCellById,
+	getCultureById,
+	getProvinceById,
+	getReligionById,
+	getStateById,
+} from "./map";
+import { isValidCulture, isValidJsonMap } from "./validation";
+import {
+	buildCityGeneratorLink,
+	buildEmblemLink,
+	buildVillageGeneratorLink,
+	createMapObjectMarkdown,
+	CustomContentRegexp,
+	readableArea,
+	readableHeight,
+	readablePopulation,
+	readableTemperature,
+	vaultLinkToMd,
 	type IMarkdownNote,
+} from "./markdown";
+import {
+	createVaultDirectories,
+	getFileNameForBurg,
+	getFileNameForCulture,
+	getLinkToBiome,
+	getLinkToCulture,
+	getLinkToProvince,
+	getLinkToReligion,
+	getLinkToState,
 	type IPath,
 	type IVaultDirectory,
-} from "./markdown";
+} from "./vault";
 import path from "node:path";
-
-const CustomContentRegexp = /%% CUSTOM-START %%\n(.+)\n%% CUSTOM-END %%/;
 
 /**
  * Retrieves any Custom Content from the file at the given path
@@ -113,24 +145,135 @@ export async function convertMapToObsidianVault(
 	const fileWritePs: Promise<void>[] = [];
 
 	fileWritePs.push(
-		// Cultures
-		// ...writeMapObjectToFile(
-		// 	[map.pack.cultures[0]],
-		// 	wildCultureToMd,
-		// 	vault.cultures,
-		// 	map,
-		// 	vault,
-		// ),
-		...writeMapObjectToFile<ICulture>(
-			map.pack.cultures.slice(1) as ICulture[],
+		...writeMapObjectToFile<IWildCulture & Partial<ICulture>>(
+			map.pack.cultures,
 			cultureToMd,
 			vault.cultures,
 			map,
 			vault,
 		),
 		// Burgs
-		// ...writeMapObjectToFile(map.pack.burgs, burgToMd, vault.burgs, map, vault),
+		...writeMapObjectToFile<IBurg>(
+			map.pack.burgs.slice(1),
+			burgToMd,
+			vault.burgs,
+			map,
+			vault,
+		),
 	);
 
 	await Promise.allSettled(fileWritePs);
+}
+
+export function cultureToMd(
+	culture: IWildCulture & Partial<ICulture>,
+	map: IJsonMapEx,
+	vault: IVaultDirectory,
+): IMarkdownNote {
+	const nameParts = culture.name.match(/(.*) \((.*)\)/);
+	const species =
+		isValidCulture(culture) && nameParts?.length ? nameParts[2] : "Any";
+	const type = isValidCulture(culture) ? culture.type : "Any";
+	const fileName = getFileNameForCulture(culture);
+	const populationNumbers = computePopulation(
+		culture.rural,
+		culture.urban,
+		map,
+	);
+	const populationStrings = readablePopulation(
+		culture.rural,
+		culture.urban,
+		map,
+	);
+	const origins = culture.origins
+		.filter((o) => typeof o === "number")
+		.map((cultureId) => getCultureById(cultureId, map))
+		.filter((c) => c !== undefined);
+	// TODO: Link to name base file for random tables
+	const nameBase =
+		map.nameBases.find((base, i) => i === culture.base)?.name ?? "Any";
+	const contents = createMapObjectMarkdown({
+		aliases: [culture.name],
+		type: "culture",
+		additionalFrontMatter: {
+			names: nameBase,
+			type: type,
+			species: species,
+			area: computeAreaFromPixels(culture.area, map),
+			totalPopulation: populationNumbers.total,
+			urbanPopulation: populationNumbers.urban,
+			ruralPopulation: populationNumbers.rural,
+		},
+		title: culture.name,
+		propertiesList: {
+			Names: nameBase,
+			Type: type,
+			Area: readableArea(culture.area, map),
+			Population: `${populationStrings.total} (${populationStrings.urban} Urban, ${populationStrings.rural} Rural)`,
+			Origins: origins
+				.map((originCulture) =>
+					vaultLinkToMd(getLinkToCulture(originCulture, vault)),
+				)
+				.join(", "),
+		},
+	});
+	return {
+		fileName,
+		contents,
+	};
+}
+
+export function burgToMd(
+	burg: IBurg,
+	map: IJsonMapEx,
+	vault: IVaultDirectory,
+): IMarkdownNote {
+	const fileName = getFileNameForBurg(burg);
+	const population = computePopulation(0, burg.population, map).total;
+	const isCity = population > map.settings.options.villageMaxPopulation;
+	const villageOrCity = isCity ? "city" : "village";
+	const burgCell = getCellById(burg.cell, map);
+	if (!burgCell) {
+		throw new Error(
+			`Could not find Cell (${burg.cell}) for Burg (${burg.i} - ${burg.name})`,
+		);
+	}
+	const mapLink = isCity
+		? buildCityGeneratorLink(burg, map)
+		: buildVillageGeneratorLink(burg, map);
+	const mapEmbed = `<iframe src="${mapLink}" width="100%"></iframe><br/><a href="${mapLink}">View Map</a>`;
+	const emblemUrl = buildEmblemLink(burg.coa);
+	const emblemEmbed = `![floatright](${emblemUrl})`;
+
+	const contents = createMapObjectMarkdown({
+		tags: [villageOrCity],
+		type: "burg",
+		additionalFrontMatter: {
+			population,
+			type: burg.type,
+		},
+		beforeTitle: `${mapEmbed}\n\n${emblemEmbed}`,
+		title: `${burg.name}${burg.capital ? '<span title="Capital City">&Star;</span>' : ""}`,
+		propertiesList: {
+			Population: readablePopulation(0, population, map).total,
+			Temperature: readableTemperature(burgCell.grid.temp, map),
+			Biome: vaultLinkToMd(
+				getLinkToBiome(getBiomeById(burgCell.pack.biome, map), vault),
+			),
+			Culture: vaultLinkToMd(
+				getLinkToCulture(getCultureById(burg.culture, map), vault),
+			),
+			State: vaultLinkToMd(
+				getLinkToState(getStateById(burg.state, map), vault),
+			),
+			Religion: vaultLinkToMd(
+				getLinkToReligion(getReligionById(burgCell.pack.religion, map), vault),
+			),
+			Province: vaultLinkToMd(
+				getLinkToProvince(getProvinceById(burgCell.pack.province, map), vault),
+			),
+			Elevation: readableHeight(burgCell.pack, burgCell.grid, map),
+		},
+	});
+	return { fileName, contents };
 }
