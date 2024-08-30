@@ -1216,4 +1216,5 @@ export interface IJsonMap {
 
 export interface IJsonMapEx extends IJsonMap {
 	biomes: IBiome[];
+	routeLinks: Record<number, Record<number, number>>;
 }

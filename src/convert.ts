@@ -5,20 +5,35 @@ import type {
 	ICulture,
 	IJsonMap,
 	IJsonMapEx,
+	INameBase,
+	INeutralState,
+	INoReligion,
+	IProvince,
+	IReligion,
+	IRiver,
+	IRoute,
+	IState,
 	IWildCulture,
 } from "./definitions";
 import {
 	buildBiomes,
+	buildRouteLinks,
 	computeAreaFromPixels,
 	computePopulation,
 	getBiomeById,
+	getBurgById,
 	getCellById,
 	getCultureById,
 	getProvinceById,
 	getReligionById,
 	getStateById,
 } from "./map";
-import { isValidCulture, isValidJsonMap } from "./validation";
+import {
+	isValidCulture,
+	isValidJsonMap,
+	isValidNeutralState,
+	isValidState,
+} from "./validation";
 import {
 	buildCityGeneratorLink,
 	buildEmblemLink,
@@ -36,7 +51,10 @@ import {
 	createVaultDirectories,
 	getFileNameForBurg,
 	getFileNameForCulture,
+	getFileNameForProvince,
+	getFileNameForState,
 	getLinkToBiome,
+	getLinkToBurg,
 	getLinkToCulture,
 	getLinkToProvince,
 	getLinkToReligion,
@@ -127,6 +145,7 @@ export async function convertMapToObsidianVault(
 		);
 	}
 	const biomes: IBiome[] = buildBiomes(parsedMap);
+	const routeLinks = buildRouteLinks(parsedMap);
 	console.log("Stats: ", {
 		cultures: parsedMap.pack.cultures.length,
 		burgs: parsedMap.pack.burgs.length,
@@ -139,7 +158,7 @@ export async function convertMapToObsidianVault(
 		notes: parsedMap.notes.length,
 		biomes: biomes.length,
 	});
-	const map: IJsonMapEx = { ...parsedMap, biomes };
+	const map: IJsonMapEx = { ...parsedMap, biomes, routeLinks };
 	const vault: IVaultDirectory =
 		await createVaultDirectories(obsidianVaultPath);
 	const fileWritePs: Promise<void>[] = [];
@@ -160,10 +179,74 @@ export async function convertMapToObsidianVault(
 			map,
 			vault,
 		),
+		// States
+		...writeMapObjectToFile<INeutralState & Partial<IState>>(
+			map.pack.states,
+			stateToMd,
+			vault.states,
+			map,
+			vault,
+		),
+		// Provinces
+		...writeMapObjectToFile<IProvince>(
+			map.pack.provinces.slice(1),
+			provinceToMd,
+			vault.provinces,
+			map,
+			vault,
+		),
+		// // Religions
+		// ...writeMapObjectToFile<INoReligion & Partial<IReligion>>(
+		// 	map.pack.religions,
+		// 	religionToMd,
+		// 	vault.religions,
+		// 	map,
+		// 	vault,
+		// ),
+		// // Biomes
+		// ...writeMapObjectToFile<IBiome>(
+		// 	map.biomes,
+		// 	biomeToMd,
+		// 	vault.biomes,
+		// 	map,
+		// 	vault,
+		// ),
+		// // Rivers
+		// ...writeMapObjectToFile<IRiver>(
+		// 	map.pack.rivers,
+		// 	riverToMd,
+		// 	vault.rivers,
+		// 	map,
+		// 	vault,
+		// ),
+		// // Routes
+		// ...writeMapObjectToFile<IRoute>(
+		// 	map.pack.routes,
+		// 	routeToMd,
+		// 	vault.routes,
+		// 	map,
+		// 	vault,
+		// ),
+		// // NameBases
+		// ...writeMapObjectToFile<INameBase>(
+		// 	map.nameBases,
+		// 	nameBaseToMd,
+		// 	vault.nameBases,
+		// 	map,
+		// 	vault,
+		// ),
 	);
 
 	await Promise.allSettled(fileWritePs);
 }
+
+const ruralUrbanMixedPopulationString = (
+	obj: { rural: number; urban: number },
+	map: IJsonMap,
+) => {
+	const populationStrings = readablePopulation(obj.rural, obj.urban, map);
+	return `${populationStrings.total} (${populationStrings.urban} Urban, ${populationStrings.rural} Rural)`;
+};
 
 export function cultureToMd(
 	culture: IWildCulture & Partial<ICulture>,
@@ -209,13 +292,14 @@ export function cultureToMd(
 			Names: nameBase,
 			Type: type,
 			Area: readableArea(culture.area, map),
-			Population: `${populationStrings.total} (${populationStrings.urban} Urban, ${populationStrings.rural} Rural)`,
+			Population: ruralUrbanMixedPopulationString(culture, map),
 			Origins: origins
 				.map((originCulture) =>
 					vaultLinkToMd(getLinkToCulture(originCulture, vault)),
 				)
 				.join(", "),
 		},
+		removed: culture.removed,
 	});
 	return {
 		fileName,
@@ -274,6 +358,75 @@ export function burgToMd(
 			),
 			Elevation: readableHeight(burgCell.pack, burgCell.grid, map),
 		},
+		removed: burg.removed,
+	});
+	return { fileName, contents };
+}
+
+export function stateToMd(
+	state: INeutralState & Partial<IState>,
+	map: IJsonMapEx,
+	vault: IVaultDirectory,
+): IMarkdownNote {
+	const fileName = getFileNameForState(state);
+	const emblemEmbed = state.coa
+		? `![floatright](${buildEmblemLink(state.coa)})`
+		: undefined;
+	const contents = createMapObjectMarkdown({
+		type: "state",
+		additionalFrontMatter: {
+			population: computePopulation(state.rural, state.urban, map).total,
+			type: state.type,
+			name: state.name,
+			form: state.form,
+		},
+		beforeTitle: emblemEmbed,
+		title: state.fullName ?? state.name,
+		propertiesList: {
+			Population: ruralUrbanMixedPopulationString(state, map),
+			Area: readableArea(state.area, map),
+			Capital: state.capital
+				? vaultLinkToMd(getLinkToBurg(getBurgById(state.capital, map), vault))
+				: undefined,
+			Culture: state.culture
+				? vaultLinkToMd(
+						getLinkToCulture(getCultureById(state.culture, map), vault),
+					)
+				: undefined,
+			Type: state.type,
+			"# Burgs": state.burgs.toString(),
+		},
+		removed: state.removed,
+	});
+	return { fileName, contents };
+}
+
+export function provinceToMd(
+	province: IProvince,
+	map: IJsonMapEx,
+	vault: IVaultDirectory,
+): IMarkdownNote {
+	const fileName = getFileNameForProvince(province);
+	const emblemEmbed = `![floatright](${buildEmblemLink(province.coa)})`;
+	const contents = createMapObjectMarkdown({
+		aliases: [province.fullName],
+		type: "province",
+		additionalFrontMatter: {
+			population: computePopulation(province.rural, province.urban, map).total,
+			name: province.name,
+			form: province.formName,
+		},
+		beforeTitle: emblemEmbed,
+		title: province.fullName,
+		propertiesList: {
+			Population: ruralUrbanMixedPopulationString(province, map),
+			Area: readableArea(province.area, map),
+			Capital: province.burg
+				? vaultLinkToMd(getLinkToBurg(getBurgById(province.burg, map), vault))
+				: undefined,
+			"# Burgs": province.burgs.length.toString(),
+		},
+		removed: province.removed,
 	});
 	return { fileName, contents };
 }

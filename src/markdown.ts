@@ -8,7 +8,6 @@ import type {
 	IPackCell,
 } from "./definitions";
 import {
-	buildRouteLinks,
 	cellIsCrossroad,
 	computeAreaFromPixels,
 	computePopulation,
@@ -361,7 +360,7 @@ export function buildVillageGeneratorLink(
 	else if (burgCell.pack.r) tags.push("river");
 	else if (pop < 200 && each(4)(burg.cell)) tags.push("pond");
 
-	const connections = buildRouteLinks(map)[burg.cell] || {};
+	const connections = map.routeLinks[burg.cell] || {};
 	const roads = Object.values(connections).filter((routeId) => {
 		const route = map.pack.routes[routeId];
 		return route.group === "roads" || route.group === "trails";

@@ -1,5 +1,6 @@
 import type {
 	IBiome,
+	IBurg,
 	ICulture,
 	IGridCell,
 	IJsonMap,
@@ -67,6 +68,13 @@ export function getStateById(
 	map: IJsonMap,
 ): IState | INeutralState | undefined {
 	return map.pack.states.find((s) => s.i === id);
+}
+
+/**
+ * Get a burg from a map by index/id.
+ */
+export function getBurgById(id: number, map: IJsonMap): IBurg | undefined {
+	return map.pack.burgs.find((p) => p.i === id);
 }
 
 /**
@@ -170,9 +178,8 @@ export function buildRouteLinks(
 	return links;
 }
 
-export function cellIsCrossroad(cell: IPackCell, map: IJsonMap) {
-	const links = buildRouteLinks(map);
-	const connections = links[cell.i];
+export function cellIsCrossroad(cell: IPackCell, map: IJsonMapEx) {
+	const connections = map.routeLinks[cell.i];
 	if (!connections) return false;
 	return (
 		Object.keys(connections).length > 3 ||
