@@ -2,6 +2,8 @@
 
 Convert a .json file from [Azgaar's Fantasy Map Generator](https://azgaar.github.io/Fantasy-Map-Generator/) to an [Obsidian.md](https://obsidian.md) Vault based on [Josh Plunkett's Obsidian for TTRPGs](https://obsidianttrpgtutorials.com).
 
+![Screenshot of Example Vault](./docs/exampleVault.png)
+
 ## Getting Started
 
 1. [Install Node.js via NVM](https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating)
