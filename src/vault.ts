@@ -4,11 +4,11 @@ import type {
 	IBiome,
 	IBurg,
 	ICulture,
-	IJsonMap,
 	IMarker,
 	INameBase,
 	INeutralState,
 	INoReligion,
+	INote,
 	IProvince,
 	IReligion,
 	IRiver,
@@ -29,6 +29,14 @@ const mkdirSafe = async (path: string) => fs.mkdir(path, { recursive: true });
  * Vault directory where all of the generated content will be stored.
  */
 export const worldDirectoryName = "1. World";
+/**
+ * Vault directory where all of the asset files will be stored.
+ */
+export const assetsDirectoryName = "z_Assets";
+/**
+ * Vault directory where all of the map data files will be stored.
+ */
+export const mapDataDirectoryName = "z_Map";
 
 export interface IPath {
 	/**
@@ -57,12 +65,16 @@ export interface IPath {
  *  /Rivers - Each river and information about it
  *  /Routes - Major routes, roads, and trails
  *  /POI - Points of Interest
+ * /z_Assets - Images and such
+ * /z_Map - Geojson files and such
  *
  * This structure creates a baseline for a world that can be added to with flavor and mechanics for a given story or system.
  */
 export interface IVaultDirectory {
 	root: IPath;
 	world: IPath;
+	assets: IPath;
+	mapData: IPath;
 	cultures: IPath;
 	biomes: IPath;
 	burgs: IPath;
@@ -99,10 +111,22 @@ export async function createVaultDirectories(
 		rootDir,
 		rootDir,
 	);
+	const assetsDirectoryPath = createSubDirPath(
+		assetsDirectoryName,
+		rootDir,
+		rootDir,
+	);
+	const mapDataDirectoryPath = createSubDirPath(
+		mapDataDirectoryName,
+		rootDir,
+		rootDir,
+	);
 
 	const vaultDirectory: IVaultDirectory = {
 		root: { absolute: rootDir, relative: path.relative(rootDir, rootDir) },
 		world: worldDirectoryPath,
+		assets: assetsDirectoryPath,
+		mapData: mapDataDirectoryPath,
 		cultures: createSubDirPath("Cultures", worldDirectoryPath.absolute),
 		biomes: createSubDirPath("Biomes", worldDirectoryPath.absolute),
 		burgs: createSubDirPath("Burgs", worldDirectoryPath.absolute),
@@ -112,7 +136,7 @@ export async function createVaultDirectories(
 		religions: createSubDirPath("Religions", worldDirectoryPath.absolute),
 		rivers: createSubDirPath("Rivers", worldDirectoryPath.absolute),
 		routes: createSubDirPath("Routes", worldDirectoryPath.absolute),
-		poi: createSubDirPath("POI", worldDirectoryPath.absolute),
+		poi: createSubDirPath("PointsOfInterest", worldDirectoryPath.absolute),
 	};
 	await mkdirSafe(vaultDirectory.root.absolute);
 	await mkdirSafe(vaultDirectory.world.absolute);
@@ -311,6 +335,29 @@ export function getLinkToRoute(
 		relativeVaultPath: path.join(
 			vault.routes.relative,
 			getFileNameForRoute(route),
+		),
+	};
+}
+
+export function getFileNameForMarker(
+	marker: IMarker,
+	note: INote | undefined,
+): string {
+	return normalizeFileName(note ? note.name : `marker-${marker.i}`);
+}
+export function getLinkToMarker(
+	marker: IMarker | undefined,
+	note: INote | undefined,
+	vault: IVaultDirectory,
+): IVaultLink | undefined {
+	if (marker === undefined) {
+		return undefined;
+	}
+	return {
+		displayName: note ? note.name : `Unknown Marker ${marker.i}`,
+		relativeVaultPath: path.join(
+			vault.poi.relative,
+			getFileNameForMarker(marker, note),
 		),
 	};
 }

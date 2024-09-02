@@ -2,7 +2,7 @@ import type { Argv } from "yargs";
 import yargs from "yargs/yargs";
 import { hideBin } from "yargs/helpers";
 import path from "node:path";
-import { convertMapToObsidianVault } from "./convert";
+import { convertMapToObsidianVault } from "./conversions";
 
 function resolvePath(filepath: string): string {
 	if (filepath[0] === "~") {
@@ -26,11 +26,25 @@ function resolvePath(filepath: string): string {
 			"Convert a .json file to a Markdown workspace.",
 			(y) =>
 				y
+					.option("json", {
+						alias: "j",
+						type: "string",
+						description:
+							"Path to the .json file, resolved from current working directory if relative.",
+						demandOption: true,
+					})
 					.option("map", {
 						alias: "m",
 						type: "string",
 						description:
-							"Path to the .json file, resolved from current working directory if relative.",
+							"Path to the .map file, resolved from current working directory if relative.",
+						demandOption: true,
+					})
+					.option("img", {
+						alias: "i",
+						type: "string",
+						description:
+							"Path to the .svg file, resolved from current working directory if relative.",
 						demandOption: true,
 					})
 					.option("outputDir", {
@@ -45,13 +59,17 @@ function resolvePath(filepath: string): string {
 						"Creates a markdown files in ~/Documents/MyObsidianVault based on ~/Downloads/MyMap.json",
 					),
 			async (argv) => {
+				const json = resolvePath(argv.json);
 				const map = resolvePath(argv.map);
+				const img = resolvePath(argv.img);
 				const outDir = resolvePath(argv.outputDir);
 				console.log("Converting Map file to Obsidian vault.", {
+					jsonFilePath: json,
 					mapFilePath: map,
+					mapImagePath: img,
 					obsidianVaultPath: outDir,
 				});
-				return convertMapToObsidianVault(map, outDir);
+				return convertMapToObsidianVault(json, map, img, outDir);
 			},
 		)
 		.demandCommand()

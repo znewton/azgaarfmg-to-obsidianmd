@@ -130,3 +130,4 @@ dist
 .pnp.*
 
 tmp
+.DS_STORE

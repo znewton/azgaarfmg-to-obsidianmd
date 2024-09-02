@@ -8,13 +8,14 @@ import {
 	readablePopulation,
 } from "../markdown";
 import type { IJsonMap, IJsonMapEx, IMapSettings } from "../definitions";
-import { buildBiomes } from "../map";
+import { buildBiomes, buildRouteLinks } from "../map";
 import koberzarJson from "./example/koberzar.json";
 
 describe("markdown helpers & converters", () => {
 	const exampleMap: IJsonMapEx = {
 		...(koberzarJson as unknown as IJsonMap),
 		biomes: buildBiomes(koberzarJson as unknown as IJsonMap),
+		routeLinks: buildRouteLinks(koberzarJson as unknown as IJsonMap),
 	};
 	describe("readableNumber()", () => {
 		test("displays less than 1 thousand", () => {

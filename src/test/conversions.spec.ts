@@ -1,16 +1,23 @@
 import { describe, expect, test } from "@jest/globals";
 import path from "node:path";
-import { burgToMd, cultureToMd } from "../convert";
+import { burgToMd, cultureToMd } from "../conversions";
 import { CustomContentString } from "../markdown";
-import { type IPath, type IVaultDirectory, worldDirectoryName } from "../vault";
+import {
+	assetsDirectoryName,
+	type IPath,
+	type IVaultDirectory,
+	mapDataDirectoryName,
+	worldDirectoryName,
+} from "../vault";
 import type { IBurg, ICulture, IJsonMap, IJsonMapEx } from "../definitions";
-import { buildBiomes } from "../map";
+import { buildBiomes, buildRouteLinks } from "../map";
 import koberzarJson from "./example/koberzar.json";
 
 describe("convert map objects to markdown", () => {
 	const exampleMap: IJsonMapEx = {
 		...(koberzarJson as unknown as IJsonMap),
 		biomes: buildBiomes(koberzarJson as unknown as IJsonMap),
+		routeLinks: buildRouteLinks(koberzarJson as unknown as IJsonMap),
 	};
 	const exampleVaultRootDir = "/testVault";
 	const createMockVaultPath = (name: string): IPath => ({
@@ -18,12 +25,16 @@ describe("convert map objects to markdown", () => {
 		relative: path.relative(exampleVaultRootDir, name),
 	});
 	const exampleVaultWorldPath = createMockVaultPath(worldDirectoryName);
+	const exampleVaultAssetsPath = createMockVaultPath(assetsDirectoryName);
+	const exampleVaultMapDataPath = createMockVaultPath(mapDataDirectoryName);
 	const exampleVault: IVaultDirectory = {
 		root: {
 			absolute: exampleVaultRootDir,
 			relative: path.relative(exampleVaultRootDir, exampleVaultRootDir),
 		},
 		world: exampleVaultWorldPath,
+		assets: exampleVaultAssetsPath,
+		mapData: exampleVaultMapDataPath,
 		cultures: createMockVaultPath("cultures"),
 		biomes: createMockVaultPath("biomes"),
 		burgs: createMockVaultPath("burgs"),

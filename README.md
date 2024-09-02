@@ -50,6 +50,21 @@ Skip this if the directory you output the vault to is *actually* an Obsidian vau
 ## Usage
 
 1. Generate a fantasy map using [Azgaar's Fantasy Map Generator](https://azgaar.github.io/Fantasy-Map-Generator/)
-1. ***Important!*** Go to the "Tools" tab in the top left, then open each of the following "Edit" windows to calculate area and population values: Burgs, Cultures, Diplomacy, NameBases, Provinces (select State = All), States, Religions, and Routes.
+    - Really familiarize yourself with this incredibly powerful tool ([Quick Start Guide](https://github.com/Azgaar/Fantasy-Map-Generator/wiki/Quick-Start-Tutorial))
+    - **Tip**: If you have a specific genre or ✨vibe✨ you're going for, once you are happy with the baseline of the world (e.g. continents) explore regeneration options of things like states and cultures. This will let you adjust the world's peoples to match your mental image.
+1. ***Important!*** Go to the "Tools" tab in the top left, then open each of the following "Edit" windows to prompt calculation of values like area and population:
+    - Burgs
+    - Cultures
+    - Diplomacy
+    - NameBases
+    - Provinces (select State = All)
+    - States
+    - Religions
+    - Routes
 1. "Export" `full` JSON (saves a .json file to your Downloads folder)
-1. Run `npm run convert -- --map ~/path/to/fmg.json --out ~/path/to/obsidian-vault`
+1. "Save" `machine` (saves a .map file to your Downloads folder)
+1. Configure a "stylistic" image of the map for visual reference (to be used within "homepage" leaflet map).
+    - **Tip**: Rivers & Routes are redundant. They are included in the output of the script as interactive leaflet map features.
+    - *Personally*, I like the look of the following layers: Texture, Heightmap, Relief, States, Zones, Borders, Ice, Labels, Scale Bar, and Vignette. Also, set "Options > Rendering" to Best Quality.
+1. "Export" `.svg` image (size doesn't matter) with "Show all labels" checked.
+1. Run `npm run convert -- --map ~/path/to/exported-map.map --json ~/path/to/exported-map.map --img ~/path/to/exported-map.svg --out ~/path/to/obsidian-vault`

@@ -5,12 +5,16 @@ import type {
 	IGridCell,
 	IJsonMap,
 	IJsonMapEx,
+	IMarker,
 	INeutralState,
 	INoReligion,
+	INote,
 	IPackCell,
 	IPackFeature,
 	IProvince,
+	IRegiment,
 	IReligion,
+	IRiver,
 	IState,
 	IWildCulture,
 } from "./definitions";
@@ -126,6 +130,28 @@ export function getFeatureById(
 	return map.pack.features.find((f) => f.i === id);
 }
 
+export function getRiverById(id: number, map: IJsonMap): IRiver | undefined {
+	return map.pack.rivers.find((r) => r.i === id);
+}
+
+export function getMarkerById(id: number, map: IJsonMap): IMarker | undefined {
+	return map.pack.markers.find((m) => m.i === id);
+}
+
+export function getMarkerNote(
+	marker: IMarker,
+	map: IJsonMap,
+): INote | undefined {
+	return map.notes.find((n) => n.id === `marker${marker.i}`);
+}
+
+export function getRegimentNote(
+	regiment: IRegiment,
+	map: IJsonMap,
+): INote | undefined {
+	return map.notes.find((n) => n.id === `regiment${regiment.i}-${regiment.n}`);
+}
+
 /**
  * Get a Biome by id.
  */
@@ -187,4 +213,17 @@ export function cellIsCrossroad(cell: IPackCell, map: IJsonMapEx) {
 			(routeId) => map.pack.routes[routeId]?.group === "roads",
 		).length > 2
 	);
+}
+
+export function getLatLongFromXY(
+	x: number,
+	y: number,
+	map: IJsonMap,
+): { latitude: number; longitude: number } {
+	return {
+		latitude:
+			map.mapCoordinates.latN + (y / map.info.height) * map.mapCoordinates.latT,
+		longitude:
+			map.mapCoordinates.lonW + (x / map.info.width) * map.mapCoordinates.lonT,
+	};
 }
