@@ -222,7 +222,7 @@ export function getLatLongFromXY(
 ): { latitude: number; longitude: number } {
 	return {
 		latitude:
-			map.mapCoordinates.latN + (y / map.info.height) * map.mapCoordinates.latT,
+			map.mapCoordinates.latS + (y / map.info.height) * map.mapCoordinates.latT,
 		longitude:
 			map.mapCoordinates.lonW + (x / map.info.width) * map.mapCoordinates.lonT,
 	};

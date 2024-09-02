@@ -68,3 +68,8 @@ Skip this if the directory you output the vault to is *actually* an Obsidian vau
     - *Personally*, I like the look of the following layers: Texture, Heightmap, Relief, States, Zones, Borders, Ice, Labels, Scale Bar, and Vignette. Also, set "Options > Rendering" to Best Quality.
 1. "Export" `.svg` image (size doesn't matter) with "Show all labels" checked.
 1. Run `npm run convert -- --map ~/path/to/exported-map.map --json ~/path/to/exported-map.map --img ~/path/to/exported-map.svg --out ~/path/to/obsidian-vault`
+
+```shell
+# Example
+npm run convert -- -j ./src/test/example/koberzar.json -m ./src/test/example/koberzar.map -i ./src/test/example/koberzar.svg -o ~/Documents/obsidian-koberzar
+```

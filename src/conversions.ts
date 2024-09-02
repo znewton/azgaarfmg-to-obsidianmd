@@ -648,15 +648,16 @@ export function markerToMd(
 	const { latitude, longitude } = getLatLongFromXY(marker.x, marker.y, map);
 	const contents = createMapObjectMarkdown({
 		type: "marker",
-		tags: ["mapmarker", marker.type ?? "unknown-marker"],
+		tags: ["point-of-interest"],
 		additionalFrontMatter: {
 			name: note.name,
 			location: [latitude, longitude],
-			mapmarker: marker.type ?? "marker",
 		},
-		title: note.name,
-		beforePropertiesList: note.legend,
-		propertiesList: {},
+		title: `${marker.icon} ${note.name}`,
+		propertiesList: {
+			Type: marker.type ?? "Unknown",
+		},
+		beforeCustomContent: note.legend,
 	});
 	return { fileName, contents };
 }
@@ -725,6 +726,12 @@ export function routeToMd(
 		propertiesList: {
 			Group: route.group,
 			Length: lengthStr,
+			Surface:
+				routeFeature?.land === undefined
+					? undefined
+					: routeFeature.land
+						? "Land"
+						: "Water",
 		},
 	});
 	return { fileName, contents };
@@ -761,7 +768,7 @@ export function createMapHomepage(
 		0,
 	);
 	const globalTerritoryArea = map.pack.provinces.reduce(
-		(accumulator, currentValue) => accumulator + currentValue.area,
+		(accumulator, currentValue) => accumulator + (currentValue.area ?? 0),
 		0,
 	);
 	const contents = `
@@ -772,14 +779,14 @@ ${map.info.description}
 \`\`\`leaflet
 id: ${map.info.mapName}-map
 image: [[${path.join(vault.assets.relative, `${map.info.mapName.toLowerCase()}.svg`)}]]
-markerTag: #mapmarker
+markerFolder: ${vault.poi.relative}
 lock: true
 bounds:
   - [${map.mapCoordinates.latN},${map.mapCoordinates.lonW}]
   - [${map.mapCoordinates.latS},${map.mapCoordinates.lonE}]
 height: 500px
-lat: ${map.settings.latitude}
-long: ${map.settings.longitude}
+lat: ${map.mapCoordinates.latT / 2 + map.mapCoordinates.latS}
+long: ${map.mapCoordinates.lonT / 2 + map.mapCoordinates.lonW}
 minZoom: 2.5
 maxZoom: 10
 defaultZoom: 2.75
