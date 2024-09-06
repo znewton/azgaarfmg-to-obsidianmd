@@ -33,13 +33,7 @@ import {
 	getRiverById,
 	getStateById,
 } from "./map";
-import {
-	isValidCulture,
-	isValidJsonMap,
-	isValidNeutralState,
-	isValidReligion,
-	isValidState,
-} from "./validation";
+import { isValidCulture, isValidJsonMap, isValidReligion } from "./validation";
 import {
 	buildCityGeneratorLink,
 	buildEmblemLink,
@@ -75,51 +69,17 @@ import {
 	getLinkToRiver,
 	getLinkToState,
 	worldDirectoryName,
-	type IPath,
+	type IVaultPath,
 	type IVaultDirectory,
 } from "./vault";
 import path from "node:path";
-
-/**
- * Retrieves any Custom Content from the file at the given path
- * if it exists.
- */
-async function getExistingFileCustomContents(
-	filePath: string,
-): Promise<string | undefined> {
-	const existingFile = await fs
-		.readFile(filePath, { encoding: "utf-8" })
-		.catch((e: unknown) => {
-			if (
-				typeof e === "object" &&
-				(e as Record<string, string>).code === "ENOENT"
-			) {
-				return undefined;
-			}
-			throw e;
-		});
-	const customContent = existingFile?.match(CustomContentRegexp)?.[1];
-	return customContent;
-}
-
-/**
- * Inserts the custom contents into the content string within the special location.
- */
-function insertCustomContents(
-	customContents: string | undefined,
-	contents: string,
-): string {
-	if (customContents === undefined) {
-		return contents;
-	}
-	const [start, end] = contents.split(CustomContentRegexp);
-	return `${start}%% CUSTOM-START %%\n${customContents}\n%% CUSTOM-END %%${end}`;
-}
+import { getExistingFileCustomContents, insertCustomContents } from "./utils";
+import { createDataviewPages } from "./dataviews";
 
 function writeMapObjectToFile<T>(
 	objects: T[],
 	converter: (obj: T, map: IJsonMapEx, vault: IVaultDirectory) => IMarkdownNote,
-	vaultPath: IPath,
+	vaultPath: IVaultPath,
 	map: IJsonMapEx,
 	vault: IVaultDirectory,
 ): Promise<void>[] {
@@ -185,9 +145,16 @@ export async function convertMapToObsidianVault(
 	const map: IJsonMapEx = { ...parsedMap, biomes, routeLinks };
 	const vault: IVaultDirectory =
 		await createVaultDirectories(obsidianVaultPath);
+	const homePage = createMapHomepage(map, vault);
 	const mdFileWritePs: Promise<void>[] = [];
 
 	mdFileWritePs.push(
+		// Home Page
+		fs.writeFile(
+			path.join(vault.world.absolute, `${homePage.fileName}.md`),
+			homePage.contents,
+		),
+		// Cultures
 		...writeMapObjectToFile<IWildCulture & Partial<ICulture>>(
 			map.pack.cultures,
 			cultureToMd,
@@ -267,18 +234,19 @@ export async function convertMapToObsidianVault(
 			map,
 			vault,
 		),
-	);
-
-	// Home Page
-	const homePage = createMapHomepage(map, vault);
-	mdFileWritePs.push(
-		fs.writeFile(
-			path.join(vault.world.absolute, `${homePage.fileName}.md`),
-			homePage.contents,
-		),
+		createDataviewPages(vault),
 	);
 
 	const mdFileWriteResults = await Promise.allSettled(mdFileWritePs);
+
+	for (const mdFileWriteResult of mdFileWriteResults) {
+		if (mdFileWriteResult.status === "rejected") {
+			console.warn(
+				"Encountered error writing markdown files.",
+				mdFileWriteResult.reason,
+			);
+		}
+	}
 
 	// Copy supporting files to appropriate directories
 	const supportingFileCopyResults = await Promise.allSettled([
@@ -304,6 +272,15 @@ export async function convertMapToObsidianVault(
 			),
 		),
 	]);
+
+	for (const supportingFileCopyResult of supportingFileCopyResults) {
+		if (supportingFileCopyResult.status === "rejected") {
+			console.warn(
+				"Encountered error copying source files.",
+				supportingFileCopyResult.reason,
+			);
+		}
+	}
 }
 
 const ruralUrbanMixedPopulationString = (
@@ -390,34 +367,41 @@ export function burgToMd(
 	const emblemUrl = buildEmblemLink(burg.coa);
 	const emblemEmbed = `![floatright](${emblemUrl})`;
 
+	const biome = getBiomeById(burgCell.pack.biome, map);
+	const culture = getCultureById(burg.culture, map);
+	const state = getStateById(burg.state, map);
+	const religion = getReligionById(burgCell.pack.religion, map);
+	const province = getProvinceById(burgCell.pack.province, map);
+
+	const temperature = readableTemperature(burgCell.grid.temp, map);
+
+	const river = getRiverById(burgCell.pack.r, map);
+
 	const contents = createMapObjectMarkdown({
 		tags: [villageOrCity],
 		type: "burg",
 		additionalFrontMatter: {
 			population,
+			temperature,
 			type: burg.type,
+			state: state?.name,
+			culture: culture?.name,
+			religion: religion?.name,
+			province: province?.name,
+			river: river?.name,
 		},
 		beforeTitle: `${mapEmbed}\n\n${emblemEmbed}`,
 		title: `${burg.name}${burg.capital ? '<span title="Capital City">&Star;</span>' : ""}`,
 		propertiesList: {
 			Population: readablePopulation(0, population, map).total,
-			Temperature: readableTemperature(burgCell.grid.temp, map),
-			Biome: vaultLinkToMd(
-				getLinkToBiome(getBiomeById(burgCell.pack.biome, map), vault),
-			),
-			Culture: vaultLinkToMd(
-				getLinkToCulture(getCultureById(burg.culture, map), vault),
-			),
-			State: vaultLinkToMd(
-				getLinkToState(getStateById(burg.state, map), vault),
-			),
-			Religion: vaultLinkToMd(
-				getLinkToReligion(getReligionById(burgCell.pack.religion, map), vault),
-			),
-			Province: vaultLinkToMd(
-				getLinkToProvince(getProvinceById(burgCell.pack.province, map), vault),
-			),
+			Temperature: temperature,
+			Biome: vaultLinkToMd(getLinkToBiome(biome, vault)),
+			Culture: vaultLinkToMd(getLinkToCulture(culture, vault)),
+			State: vaultLinkToMd(getLinkToState(state, vault)),
+			Religion: vaultLinkToMd(getLinkToReligion(religion, vault)),
+			Province: vaultLinkToMd(getLinkToProvince(province, vault)),
 			Elevation: readableHeight(burgCell.pack, burgCell.grid, map),
+			"Along River": vaultLinkToMd(getLinkToRiver(river, vault)),
 		},
 		removed: burg.removed,
 	});
@@ -433,13 +417,18 @@ export function stateToMd(
 	const emblemEmbed = state.coa
 		? `![floatright](${buildEmblemLink(state.coa)})`
 		: undefined;
+	const culture = state.culture
+		? getCultureById(state.culture, map)
+		: undefined;
 	const contents = createMapObjectMarkdown({
 		type: "state",
 		additionalFrontMatter: {
+			area: computeAreaFromPixels(state.area, map),
 			population: computePopulation(state.rural, state.urban, map).total,
 			type: state.type,
 			name: state.name,
 			form: state.form,
+			culture: culture?.name,
 		},
 		beforeTitle: emblemEmbed,
 		title: state.fullName ?? state.name,
@@ -450,9 +439,7 @@ export function stateToMd(
 				? vaultLinkToMd(getLinkToBurg(getBurgById(state.capital, map), vault))
 				: undefined,
 			Culture: state.culture
-				? vaultLinkToMd(
-						getLinkToCulture(getCultureById(state.culture, map), vault),
-					)
+				? vaultLinkToMd(getLinkToCulture(culture, vault))
 				: undefined,
 			Type: state.type,
 			"# Burgs": state.burgs.toString(),
@@ -473,6 +460,7 @@ export function provinceToMd(
 		aliases: [province.fullName],
 		type: "province",
 		additionalFrontMatter: {
+			area: computeAreaFromPixels(province.area, map),
 			population: computePopulation(province.rural, province.urban, map).total,
 			name: province.name,
 			form: province.formName,
@@ -510,11 +498,18 @@ export function religionToMd(
 		culture !== undefined
 			? (culturePopulation.total / religionPopulation.total) * 100
 			: undefined;
+	const expansion =
+		religion.expansion === "global"
+			? "Global"
+			: `${percentCulturePopulation !== undefined ? `${Math.round(percentCulturePopulation)}% of` : "Within"} ${culture?.name ?? "Culture"}`;
 	const contents = createMapObjectMarkdown({
 		aliases: [religion.name],
 		type: "religion",
 		additionalFrontMatter: {
 			population: religionPopulation.total,
+			area: religion.area
+				? computeAreaFromPixels(religion.area, map)
+				: undefined,
 			deity: religion.deity,
 			name: religion.name,
 			form: religion.form,
@@ -529,10 +524,7 @@ export function religionToMd(
 					? readableArea(religion.area, map)
 					: undefined,
 			Culture: vaultLinkToMd(getLinkToCulture(culture, vault)),
-			Expansion:
-				religion.expansion === "global"
-					? "Global"
-					: `${percentCulturePopulation !== undefined ? `${Math.round(percentCulturePopulation)}% of` : "Within"} ${culture?.name ?? "Culture"}`,
+			Expansion: expansion,
 			Origins: religion.origins
 				?.map((originReligionId) =>
 					vaultLinkToMd(
@@ -646,16 +638,44 @@ export function markerToMd(
 	}
 	const fileName = getFileNameForMarker(marker, note);
 	const { latitude, longitude } = getLatLongFromXY(marker.x, marker.y, map);
+	const markerCell = getCellById(marker.cell, map);
+	const burg = markerCell ? getBurgById(markerCell.pack.burg, map) : undefined;
+	const culture = markerCell
+		? getCultureById(markerCell.pack.culture, map)
+		: undefined;
+	const province = markerCell
+		? getProvinceById(markerCell.pack.province, map)
+		: undefined;
+	const state = markerCell
+		? getStateById(markerCell.pack.state, map)
+		: undefined;
+	const religion = markerCell
+		? getReligionById(markerCell.pack.religion, map)
+		: undefined;
+	const river = markerCell ? getRiverById(markerCell.pack.r, map) : undefined;
+
 	const contents = createMapObjectMarkdown({
 		type: "marker",
 		tags: ["point-of-interest"],
 		additionalFrontMatter: {
 			name: note.name,
 			location: [latitude, longitude],
+			type: marker.type ?? "Unknown",
+			nearbyBurg: burg?.name,
+			province: province?.name,
+			culture: culture?.name,
+			state: state?.name,
+			religion: religion?.name,
 		},
 		title: `${marker.icon} ${note.name}`,
 		propertiesList: {
 			Type: marker.type ?? "Unknown",
+			"Nearby Burg": vaultLinkToMd(getLinkToBurg(burg, vault)),
+			"In State": vaultLinkToMd(getLinkToState(state, vault)),
+			"In Province": vaultLinkToMd(getLinkToProvince(province, vault)),
+			"Nearby Culture": vaultLinkToMd(getLinkToCulture(culture, vault)),
+			"Nearby Religion": vaultLinkToMd(getLinkToReligion(religion, vault)),
+			"Nearby River": vaultLinkToMd(getLinkToRiver(river, vault)),
 		},
 		beforeCustomContent: note.legend,
 	});
@@ -673,11 +693,17 @@ export function riverToMd(
 			? `${Math.round(river.length * 0.621371)} mi`
 			: `${river.length} km`
 		: undefined;
+	const basin = getRiverById(river.basin, map);
+	const parent = getRiverById(river.parent, map);
 	const contents = createMapObjectMarkdown({
 		type: "river",
 		additionalFrontMatter: {
 			name: river.name,
 			type: river.type,
+			basin: basin?.name,
+			parent: parent?.name,
+			length: river.length,
+			lengthStr,
 		},
 		title: river.name,
 		propertiesList: {
@@ -685,15 +711,11 @@ export function riverToMd(
 			Basin:
 				river.basin === river.i
 					? undefined
-					: vaultLinkToMd(
-							getLinkToRiver(getRiverById(river.basin, map), vault),
-						),
+					: vaultLinkToMd(getLinkToRiver(basin, vault)),
 			Parent:
 				river.parent === river.i
 					? undefined
-					: vaultLinkToMd(
-							getLinkToRiver(getRiverById(river.parent, map), vault),
-						),
+					: vaultLinkToMd(getLinkToRiver(parent, vault)),
 			Flow: `${river.discharge} m<sup>3</sup>/s`,
 			Length: lengthStr,
 		},

@@ -38,7 +38,7 @@ export const assetsDirectoryName = "z_Assets";
  */
 export const mapDataDirectoryName = "z_Map";
 
-export interface IPath {
+export interface IVaultPath {
 	/**
 	 * Absolute path.
 	 * Use for reading/writing files in the script.
@@ -49,6 +49,11 @@ export interface IPath {
 	 * Use for creating markdown links.
 	 */
 	relative: string;
+	/**
+	 * Path name.
+	 * Use for creating folder notes files with the same name as the directory.
+	 */
+	name: string;
 }
 
 /**
@@ -71,20 +76,20 @@ export interface IPath {
  * This structure creates a baseline for a world that can be added to with flavor and mechanics for a given story or system.
  */
 export interface IVaultDirectory {
-	root: IPath;
-	world: IPath;
-	assets: IPath;
-	mapData: IPath;
-	cultures: IPath;
-	biomes: IPath;
-	burgs: IPath;
-	nameBases: IPath;
-	provinces: IPath;
-	states: IPath;
-	religions: IPath;
-	rivers: IPath;
-	routes: IPath;
-	poi: IPath;
+	root: IVaultPath;
+	world: IVaultPath;
+	assets: IVaultPath;
+	mapData: IVaultPath;
+	cultures: IVaultPath;
+	biomes: IVaultPath;
+	burgs: IVaultPath;
+	nameBases: IVaultPath;
+	provinces: IVaultPath;
+	states: IVaultPath;
+	religions: IVaultPath;
+	rivers: IVaultPath;
+	routes: IVaultPath;
+	poi: IVaultPath;
 }
 /**
  * Create the initial directory structure for the vault.
@@ -101,10 +106,10 @@ export async function createVaultDirectories(
 		subDirName: string,
 		parentAbsolute: string,
 		rootAbsolute: string = rootDir,
-	): IPath => {
+	): IVaultPath => {
 		const absolutePath = path.resolve(parentAbsolute, subDirName);
 		const relativePath = path.relative(rootAbsolute, absolutePath);
-		return { absolute: absolutePath, relative: relativePath };
+		return { absolute: absolutePath, relative: relativePath, name: subDirName };
 	};
 	const worldDirectoryPath = createSubDirPath(
 		worldDirectoryName,
@@ -123,7 +128,11 @@ export async function createVaultDirectories(
 	);
 
 	const vaultDirectory: IVaultDirectory = {
-		root: { absolute: rootDir, relative: path.relative(rootDir, rootDir) },
+		root: {
+			absolute: rootDir,
+			relative: path.relative(rootDir, rootDir),
+			name: "README",
+		},
 		world: worldDirectoryPath,
 		assets: assetsDirectoryPath,
 		mapData: mapDataDirectoryPath,
@@ -151,6 +160,8 @@ export async function createVaultDirectories(
 		mkdirSafe(vaultDirectory.rivers.absolute),
 		mkdirSafe(vaultDirectory.routes.absolute),
 		mkdirSafe(vaultDirectory.poi.absolute),
+		mkdirSafe(vaultDirectory.assets.absolute),
+		mkdirSafe(vaultDirectory.mapData.absolute),
 	]);
 	return vaultDirectory;
 }
