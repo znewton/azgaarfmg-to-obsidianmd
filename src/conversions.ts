@@ -378,7 +378,6 @@ export function burgToMd(
 	vault: IVaultDirectory,
 ): IMarkdownNote {
 	const fileName = getFileNameForBurg(burg);
-	// const { latitude, longitude } = getLatLongFromXY(burg.x, burg.y, map);
 	const population = computePopulation(0, burg.population, map).total;
 	const isCity = population > map.settings.options.villageMaxPopulation;
 	const villageOrCity = isCity ? "city" : "village";
@@ -417,14 +416,8 @@ export function burgToMd(
 			religion: religion?.name,
 			province: province?.name,
 			river: river?.name,
-			// location: [latitude, longitude],
-			location: [burg.y, burg.x],
-			mapmarker: {
-				icon: villageOrCity === "city" ? "city" : "store-alt",
-				color: "#6B8E72",
-				layer: false,
-			},
-			mapzoom: [0, 10],
+			location: [map.info.height - burg.y, burg.x],
+			mapmarker: villageOrCity,
 		},
 		beforeTitle: `${mapEmbed}\n\n${emblemEmbed}`,
 		title: `${burg.name}${burg.capital ? '<span title="Capital City">&Star;</span>' : ""}`,
@@ -676,7 +669,6 @@ export function markerToMd(
 		throw new Error("Encountered Marker with no Note.");
 	}
 	const fileName = getFileNameForMarker(marker, note);
-	// const { latitude, longitude } = getLatLongFromXY(marker.x, marker.y, map);
 	const markerCell = getCellById(marker.cell, map);
 	const burg = markerCell ? getBurgById(markerCell.pack.burg, map) : undefined;
 	const culture = markerCell
@@ -698,20 +690,14 @@ export function markerToMd(
 		tags: ["point-of-interest"],
 		additionalFrontMatter: {
 			name: note.name,
-			// location: [latitude, longitude],
-			location: [marker.y, marker.x],
+			location: [map.info.height - marker.y, marker.x],
+			mapmarker: "marker",
 			type: marker.type ?? "Unknown",
 			nearbyBurg: burg?.name,
 			province: province?.name,
 			culture: culture?.name,
 			state: state?.name,
 			religion: religion?.name,
-			mapmarker: {
-				icon: "info",
-				color: "#8BaE92",
-				layer: false,
-			},
-			mapzoom: [0.5, 10],
 		},
 		title: `${marker.icon} ${note.name}`,
 		propertiesList: {
@@ -947,20 +933,14 @@ export function createMapHomepage(
 		markerTag: ["#marker", "#burg"],
 		lock: true,
 		height: "500px",
-		// bounds: [
-		// 	[map.mapCoordinates.latN, map.mapCoordinates.lonW],
-		// 	[map.mapCoordinates.latS, map.mapCoordinates.lonE],
-		// ],
 		bounds: [
 			[0, 0],
 			[map.info.height, map.info.width],
 		],
-		// lat: map.mapCoordinates.latT / 2 + map.mapCoordinates.latS,
-		// long: map.mapCoordinates.lonT / 2 + map.mapCoordinates.lonW,
 		lat: map.info.height / 2,
 		long: map.info.width / 2,
 		minZoom: -1.5,
-		maxZoom: 1.5,
+		maxZoom: 2.5,
 		defaultZoom: -1,
 		zoomDelta: 0.5,
 		unit: map.settings.distanceUnit,
