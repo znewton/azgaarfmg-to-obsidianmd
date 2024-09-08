@@ -633,7 +633,7 @@ export interface IRoute {
 	/**
 	 * array of control points in format [x, y, cellId]
 	 */
-	points: number[][];
+	points: [number, number, number][];
 	/**
 	 * feature id of the route. Auto-generated routes cannot be place on multiple features
 	 */
@@ -831,7 +831,7 @@ export interface IMapSettings {
 	/**
 	 * Distance covered by 1 pixel (e.g. 4 means 1 pixel is 4 of distanceUnit).
 	 */
-	distanceScale: number;
+	distanceScale: number | string;
 	/**
 	 * Unit for labeling areas (e.g. square)
 	 */
@@ -961,7 +961,7 @@ export interface IPackCell {
 	fl: number;
 	/**
 	 * Score.
-	 * sed to define best cells to place a burg.
+	 * Used to define best cells to place a burg.
 	 */
 	s: number;
 	/**

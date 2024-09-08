@@ -331,8 +331,26 @@ export function getLinkToRiver(
 	};
 }
 
+export function isNamedRoute(
+	route: IRoute,
+): route is IRoute & Required<Pick<IRoute, "name">> {
+	return (
+		route.name !== undefined &&
+		route.name !== "Unnamed route segment" &&
+		route.name !== "Unnamed route"
+	);
+}
+export function getDisplayNameForRoute(route: IRoute): string {
+	return isNamedRoute(route)
+		? route.name
+		: `${route.group.replace(/s$/, "").toLocaleUpperCase()} ${route.i}`;
+}
 export function getFileNameForRoute(route: IRoute): string {
-	return normalizeFileName(`${route.group}-${route.i}`);
+	return normalizeFileName(
+		isNamedRoute(route)
+			? route.name
+			: getDisplayNameForRoute(route).replaceAll(" ", "-").toLowerCase(),
+	);
 }
 export function getLinkToRoute(
 	route: IRoute | undefined,
@@ -342,7 +360,9 @@ export function getLinkToRoute(
 		return undefined;
 	}
 	return {
-		displayName: route.name ?? `${route.group.toLocaleUpperCase()} ${route.i}`,
+		displayName: isNamedRoute(route)
+			? route.name
+			: `${route.group.toLocaleUpperCase()} ${route.i}`,
 		relativeVaultPath: path.join(
 			vault.routes.relative,
 			getFileNameForRoute(route),

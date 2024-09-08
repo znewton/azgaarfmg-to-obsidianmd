@@ -6,6 +6,7 @@ import type {
 	IJsonMap,
 	IJsonMapEx,
 	IMarker,
+	INameBase,
 	INeutralState,
 	INoReligion,
 	INote,
@@ -26,9 +27,11 @@ export function computeAreaFromPixels(
 	areaInPixels: number,
 	map: IJsonMap,
 ): number {
-	return Math.round(
-		areaInPixels * (map.settings.distanceScale * map.settings.distanceScale),
-	);
+	const scale =
+		typeof map.settings.distanceScale === "string"
+			? Number.parseInt(map.settings.distanceScale)
+			: map.settings.distanceScale;
+	return Math.round(areaInPixels * scale ** 2);
 }
 
 /**
@@ -150,6 +153,13 @@ export function getRegimentNote(
 	map: IJsonMap,
 ): INote | undefined {
 	return map.notes.find((n) => n.id === `regiment${regiment.i}-${regiment.n}`);
+}
+
+export function getNameBaseById(
+	id: number,
+	map: IJsonMap,
+): INameBase | undefined {
+	return map.nameBases.find((n, i) => i === id);
 }
 
 /**

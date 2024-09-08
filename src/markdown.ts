@@ -27,12 +27,22 @@ export const CustomContentRegexp = /%% CUSTOM-START %%\n(.+)\n%% CUSTOM-END %%/;
  */
 export const CustomContentString = "%% CUSTOM-START %%\n%% CUSTOM-END %%";
 
-export function propertyListToMd(
-	props: Record<string, string | undefined>,
-): string {
+type PropertyList = { [k: string]: string | PropertyList | undefined };
+/**
+ * Turn a set of Key-Value pairs into a Markdown unordered list with style:
+ * - **Key**: Value
+ *
+ * @param props - Properties in list
+ * @param level - Sub list level. Determines number of "tabs" before "-"
+ */
+export function propertyListToMd(props: PropertyList, level = 0): string {
+	const levelSpace = "    ".repeat(level);
 	return Object.entries(props)
 		.filter(([key, value]) => !!value)
-		.map(([key, value]) => `- **${key}**: ${value}`)
+		.map(
+			([key, value]) =>
+				`${levelSpace}- **${key}**: ${typeof value === "object" ? `\n${propertyListToMd(value, level + 1)}` : value}`,
+		)
 		.join("\n");
 }
 
@@ -150,7 +160,7 @@ export function createMapObjectMarkdown(opts: {
 	type: string;
 	tags?: string[];
 	title: string;
-	propertiesList: Record<string, string | undefined>;
+	propertiesList: PropertyList;
 	beforeTitle?: string;
 	beforePropertiesList?: string;
 	beforeCustomContent?: string;

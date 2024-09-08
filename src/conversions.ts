@@ -1,3 +1,4 @@
+import { stringify as toYAML } from "yaml";
 import fs from "node:fs/promises";
 import type {
 	IBiome,
@@ -9,6 +10,8 @@ import type {
 	INameBase,
 	INeutralState,
 	INoReligion,
+	INote,
+	IPackCell,
 	IProvince,
 	IReligion,
 	IRiver,
@@ -19,6 +22,7 @@ import type {
 import {
 	buildBiomes,
 	buildRouteLinks,
+	cellIsCrossroad,
 	computeAreaFromPixels,
 	computePopulation,
 	getBiomeById,
@@ -27,7 +31,9 @@ import {
 	getCultureById,
 	getFeatureById,
 	getLatLongFromXY,
+	getMarkerById,
 	getMarkerNote,
+	getNameBaseById,
 	getProvinceById,
 	getReligionById,
 	getRiverById,
@@ -71,6 +77,10 @@ import {
 	worldDirectoryName,
 	type IVaultPath,
 	type IVaultDirectory,
+	getLinkToMarker,
+	getLinkToNameBase,
+	getLinkToRoute,
+	getDisplayNameForRoute,
 } from "./vault";
 import path from "node:path";
 import { getExistingFileCustomContents, insertCustomContents } from "./utils";
@@ -148,6 +158,24 @@ export async function convertMapToObsidianVault(
 	const homePage = createMapHomepage(map, vault);
 	const mdFileWritePs: Promise<void>[] = [];
 
+	// Pre-compute cell->Marker links
+	const cellIdToMarker = new Map<number, IMarker>();
+	for (const marker of map.pack.markers) {
+		cellIdToMarker.set(marker.cell, marker);
+	}
+	// Pre-compute cell->Routes links
+	const cellIdToRoutes = new Map<number, Map<number, IRoute>>();
+	for (const mapRoute of map.pack.routes) {
+		for (const [, , cellId] of mapRoute.points) {
+			const cell = getCellById(cellId, map);
+			if (!cell) continue;
+			if (!cellIdToRoutes.has(cellId)) {
+				cellIdToRoutes.set(cellId, new Map());
+			}
+			cellIdToRoutes.get(cellId)?.set(mapRoute.i, mapRoute);
+		}
+	}
+
 	mdFileWritePs.push(
 		// Home Page
 		fs.writeFile(
@@ -221,7 +249,8 @@ export async function convertMapToObsidianVault(
 		// Routes
 		...writeMapObjectToFile<IRoute>(
 			map.pack.routes,
-			routeToMd,
+			(obj: IRoute, map: IJsonMapEx, vault: IVaultDirectory) =>
+				routeToMd(obj, cellIdToMarker, cellIdToRoutes, map, vault),
 			vault.routes,
 			map,
 			vault,
@@ -310,14 +339,12 @@ export function cultureToMd(
 		.filter((o) => typeof o === "number")
 		.map((cultureId) => getCultureById(cultureId, map))
 		.filter((c) => c !== undefined);
-	// TODO: Link to name base file for random tables
-	const nameBase =
-		map.nameBases.find((base, i) => i === culture.base)?.name ?? "Any";
+	const nameBase = getNameBaseById(culture.base, map);
 	const contents = createMapObjectMarkdown({
 		aliases: [culture.name],
 		type: "culture",
 		additionalFrontMatter: {
-			names: nameBase,
+			names: nameBase?.name ?? "Any",
 			type: type,
 			species: species,
 			area: computeAreaFromPixels(culture.area, map),
@@ -327,7 +354,7 @@ export function cultureToMd(
 		},
 		title: culture.name,
 		propertiesList: {
-			Names: nameBase,
+			Names: vaultLinkToMd(getLinkToNameBase(nameBase, vault)) ?? "Any",
 			Type: type,
 			Area: readableArea(culture.area, map),
 			Population: ruralUrbanMixedPopulationString(culture, map),
@@ -351,6 +378,7 @@ export function burgToMd(
 	vault: IVaultDirectory,
 ): IMarkdownNote {
 	const fileName = getFileNameForBurg(burg);
+	// const { latitude, longitude } = getLatLongFromXY(burg.x, burg.y, map);
 	const population = computePopulation(0, burg.population, map).total;
 	const isCity = population > map.settings.options.villageMaxPopulation;
 	const villageOrCity = isCity ? "city" : "village";
@@ -389,6 +417,14 @@ export function burgToMd(
 			religion: religion?.name,
 			province: province?.name,
 			river: river?.name,
+			// location: [latitude, longitude],
+			location: [burg.y, burg.x],
+			mapmarker: {
+				icon: villageOrCity === "city" ? "city" : "store-alt",
+				color: "#6B8E72",
+				layer: false,
+			},
+			mapzoom: [0, 10],
 		},
 		beforeTitle: `${mapEmbed}\n\n${emblemEmbed}`,
 		title: `${burg.name}${burg.capital ? '<span title="Capital City">&Star;</span>' : ""}`,
@@ -613,14 +649,17 @@ export function biomeToMd(
 		"Ideal",
 		"Perfect",
 	][Math.ceil(biome.habitability / 100)];
+	const habitabilityStr = `${habitabilityDescriptor} (${biome.habitability}/100)`;
 	const contents = createMapObjectMarkdown({
 		type: "biome",
 		additionalFrontMatter: {
 			name: biome.name,
+			habitability: habitabilityStr,
+			habitabilityScore: biome.habitability,
 		},
 		title: biome.name,
 		propertiesList: {
-			Habitability: `${habitabilityDescriptor} (${biome.habitability}/100)`,
+			Habitability: habitabilityStr,
 		},
 		beforeCustomContent: `[Wikipedia](${buildBiomeWikiLink(biome)})`,
 	});
@@ -637,7 +676,7 @@ export function markerToMd(
 		throw new Error("Encountered Marker with no Note.");
 	}
 	const fileName = getFileNameForMarker(marker, note);
-	const { latitude, longitude } = getLatLongFromXY(marker.x, marker.y, map);
+	// const { latitude, longitude } = getLatLongFromXY(marker.x, marker.y, map);
 	const markerCell = getCellById(marker.cell, map);
 	const burg = markerCell ? getBurgById(markerCell.pack.burg, map) : undefined;
 	const culture = markerCell
@@ -659,13 +698,20 @@ export function markerToMd(
 		tags: ["point-of-interest"],
 		additionalFrontMatter: {
 			name: note.name,
-			location: [latitude, longitude],
+			// location: [latitude, longitude],
+			location: [marker.y, marker.x],
 			type: marker.type ?? "Unknown",
 			nearbyBurg: burg?.name,
 			province: province?.name,
 			culture: culture?.name,
 			state: state?.name,
 			religion: religion?.name,
+			mapmarker: {
+				icon: "info",
+				color: "#8BaE92",
+				layer: false,
+			},
+			mapzoom: [0.5, 10],
 		},
 		title: `${marker.icon} ${note.name}`,
 		propertiesList: {
@@ -704,6 +750,7 @@ export function riverToMd(
 			parent: parent?.name,
 			length: river.length,
 			lengthStr,
+			flowRate: river.discharge,
 		},
 		title: river.name,
 		propertiesList: {
@@ -725,24 +772,88 @@ export function riverToMd(
 
 export function routeToMd(
 	route: IRoute,
+	cellIdToMarker: Map<number, IMarker>,
+	cellIdToRoutes: Map<number, Map<number, IRoute>>,
 	map: IJsonMapEx,
 	vault: IVaultDirectory,
 ): IMarkdownNote {
 	const fileName = getFileNameForRoute(route);
-	const name =
-		route.name ??
-		`${route.group.replace(/s$/, "").toLocaleUpperCase()} ${route.i}`;
+	const name = getDisplayNameForRoute(route);
 	const routeFeature = getFeatureById(route.feature, map);
 	const lengthStr = route.length
 		? map.settings.distanceUnit === "mi"
 			? `${Math.round(route.length * 0.621371)} mi`
 			: `${route.length} km`
 		: undefined;
+	const routeCells = new Map<number, IPackCell>();
+	const passesByBurgs = new Map<number, IBurg>();
+	const passesByMarkers = new Map<number, [IMarker, INote]>();
+	const passesByOrAcrossRivers = new Map<number, IRiver>();
+	const passesByOrAcrossRoutes = new Map<number, IRoute>();
+	const passesThroughStates = new Map<number, IState>();
+	const passesThroughProvinces = new Map<number, IProvince>();
+	const passesThroughCultures = new Map<number, ICulture>();
+	const passesThroughReligions = new Map<number, IReligion>();
+	const passesThroughBiomes = new Map<number, IBiome>();
+	for (const [x, y, cellId] of route.points) {
+		// Don't process the same cell twice
+		if (routeCells.has(cellId)) continue;
+		const cell = getCellById(cellId, map);
+		// Don't try to process off-map cells
+		if (cell === undefined) continue;
+		const burg = getBurgById(cell.pack.burg, map);
+		if (burg !== undefined) {
+			passesByBurgs.set(burg.i, burg);
+		}
+		const marker = cellIdToMarker.get(cellId);
+		if (marker !== undefined) {
+			const note = getMarkerNote(marker, map);
+			if (note !== undefined) {
+				passesByMarkers.set(marker.i, [marker, note]);
+			}
+		}
+		const river = getRiverById(cell.pack.r, map);
+		if (river !== undefined) {
+			passesByOrAcrossRivers.set(river.i, river);
+		}
+		const state = getStateById(cell.pack.state, map);
+		if (state !== undefined) {
+			passesThroughStates.set(state.i, state);
+		}
+		const province = getProvinceById(cell.pack.province, map);
+		if (province !== undefined) {
+			passesThroughProvinces.set(province.i, province);
+		}
+		const culture = getCultureById(cell.pack.culture, map);
+		if (culture !== undefined) {
+			passesThroughCultures.set(culture.i, culture);
+		}
+		const religion = getReligionById(cell.pack.religion, map);
+		if (religion !== undefined) {
+			passesThroughReligions.set(religion.i, religion);
+		}
+		const biome = getBiomeById(cell.pack.biome, map);
+		if (biome !== undefined) {
+			passesThroughBiomes.set(biome.i, biome);
+		}
+		const otherRoutesInCell = cellIdToRoutes.get(cellId);
+		if (otherRoutesInCell) {
+			for (const passedRoute of otherRoutesInCell.values()) {
+				if (passedRoute.i === route.i) continue;
+				passesByOrAcrossRoutes.set(passedRoute.i, passedRoute);
+			}
+		}
+	}
 	const contents = createMapObjectMarkdown({
 		type: "route",
+		tags: [route.group],
 		additionalFrontMatter: {
 			name: name,
 			group: route.group,
+			length: lengthStr,
+			lengthNum: route.length,
+			numBurgsPassedBy: passesByBurgs.size,
+			numMarkersPassedBy: passesByMarkers.size,
 		},
 		title: name,
 		propertiesList: {
@@ -754,6 +865,43 @@ export function routeToMd(
 					: routeFeature.land
 						? "Land"
 						: "Water",
+			"Passes by": {
+				Burgs:
+					Array.from(passesByBurgs.values())
+						.map((burg) => vaultLinkToMd(getLinkToBurg(burg, vault)))
+						.join(", ") || undefined,
+				Markers:
+					Array.from(passesByMarkers.values())
+						.map(([marker, note]) =>
+							vaultLinkToMd(getLinkToMarker(marker, note, vault)),
+						)
+						.join(", ") || undefined,
+			},
+			"Passes through": {
+				States: Array.from(passesThroughStates.values())
+					.map((state) => vaultLinkToMd(getLinkToState(state, vault)))
+					.join(", "),
+				Provinces: Array.from(passesThroughProvinces.values())
+					.map((province) => vaultLinkToMd(getLinkToProvince(province, vault)))
+					.join(", "),
+				Cultures: Array.from(passesThroughCultures.values())
+					.map((culture) => vaultLinkToMd(getLinkToCulture(culture, vault)))
+					.join(", "),
+				Religions: Array.from(passesThroughReligions.values())
+					.map((religion) => vaultLinkToMd(getLinkToReligion(religion, vault)))
+					.join(", "),
+				Biomes: Array.from(passesThroughBiomes.values())
+					.map((biome) => vaultLinkToMd(getLinkToBiome(biome, vault)))
+					.join(", "),
+			},
+			"Passes by/across": {
+				Rivers: Array.from(passesByOrAcrossRivers.values())
+					.map((river) => vaultLinkToMd(getLinkToRiver(river, vault)))
+					.join(", "),
+				Routes: Array.from(passesByOrAcrossRoutes.values())
+					.map((route) => vaultLinkToMd(getLinkToRoute(route, vault)))
+					.join(", "),
+			},
 		},
 	});
 	return { fileName, contents };
@@ -793,28 +941,41 @@ export function createMapHomepage(
 		(accumulator, currentValue) => accumulator + (currentValue.area ?? 0),
 		0,
 	);
+	const leaflet = toYAML({
+		id: `${map.info.mapName}-map`,
+		image: `[[${path.join(vault.assets.relative, `${map.info.mapName.toLowerCase()}.svg`)}]]`,
+		markerTag: ["#marker", "#burg"],
+		lock: true,
+		height: "500px",
+		// bounds: [
+		// 	[map.mapCoordinates.latN, map.mapCoordinates.lonW],
+		// 	[map.mapCoordinates.latS, map.mapCoordinates.lonE],
+		// ],
+		bounds: [
+			[0, 0],
+			[map.info.height, map.info.width],
+		],
+		// lat: map.mapCoordinates.latT / 2 + map.mapCoordinates.latS,
+		// long: map.mapCoordinates.lonT / 2 + map.mapCoordinates.lonW,
+		lat: map.info.height / 2,
+		long: map.info.width / 2,
+		minZoom: -1.5,
+		maxZoom: 1.5,
+		defaultZoom: -1,
+		zoomDelta: 0.5,
+		unit: map.settings.distanceUnit,
+		scale:
+			typeof map.settings.distanceScale === "string"
+				? Number.parseInt(map.settings.distanceScale)
+				: map.settings.distanceScale,
+	});
 	const contents = `
 # ${map.info.mapName}
 
 ${map.info.description}
 
 \`\`\`leaflet
-id: ${map.info.mapName}-map
-image: [[${path.join(vault.assets.relative, `${map.info.mapName.toLowerCase()}.svg`)}]]
-markerFolder: ${vault.poi.relative}
-lock: true
-bounds:
-  - [${map.mapCoordinates.latN},${map.mapCoordinates.lonW}]
-  - [${map.mapCoordinates.latS},${map.mapCoordinates.lonE}]
-height: 500px
-lat: ${map.mapCoordinates.latT / 2 + map.mapCoordinates.latS}
-long: ${map.mapCoordinates.lonT / 2 + map.mapCoordinates.lonW}
-minZoom: 2.5
-maxZoom: 10
-defaultZoom: 2.75
-zoomDelta: 0.5
-unit: ${map.settings.distanceUnit}
-scale: 1
+${leaflet}
 \`\`\`
 
 > View the full map at [Fantasy Map Generator](https://azgaar.github.io/Fantasy-Map-Generator/) by loading \`${vault.assets.relative}/${map.info.mapName.toLowerCase()}.map\`.

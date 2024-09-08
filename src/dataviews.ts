@@ -52,7 +52,7 @@ const burgsDataviewPage = buildDataviewMd(
 	"Burgs",
 	`TABLE ${getLargeNumFormatFn("population")} AS "Population", temperature AS "Temperature", culture AS "Culture", religion AS "Religion", state AS "State", province AS "Province"
 FROM #burg
-SORT state ASC`,
+SORT state, population ASC`,
 );
 
 const markersDataviewPage = buildDataviewMd(
@@ -62,11 +62,59 @@ FROM #marker
 SORT type ASC`,
 );
 
+const routesDataviewPage = buildDataviewMd(
+	"Routes",
+	`TABLE group AS "Group", length AS "Length", numBurgsPassedBy AS "# Burgs Passed", numMarkersPassedBy AS "# Markers Passed"
+FROM #route 
+SORT lengthNum DESC`,
+);
+
+const statesDataviewPage = buildDataviewMd(
+	"States",
+	`TABLE form AS "Form", ${getLargeNumFormatFn("area")} AS "Area (Mi<sup>2</sup>)", ${getLargeNumFormatFn("totalPopulation")}  AS "Population", culture as "Culture"
+FROM #state
+SORT area DESC`,
+);
+
+const provincesDataviewPage = buildDataviewMd(
+	"Provinces",
+	`TABLE form AS "Form", ${getLargeNumFormatFn("area")} AS "Area (Mi<sup>2</sup>)", ${getLargeNumFormatFn("totalPopulation")}  AS "Population"
+FROM #province
+SORT area DESC`,
+);
+
+const religionsDataviewPage = buildDataviewMd(
+	"Religions",
+	`TABLE form AS "Form", deity AS "Deity", ${getLargeNumFormatFn("area")} AS "Area (Mi<sup>2</sup>)", ${getLargeNumFormatFn("totalPopulation")}  AS "Population
+FROM #religion
+SORT deity, population DESC`,
+);
+
+const biomesDataviewPage = buildDataviewMd(
+	"Biomes",
+	`TABLE habitability AS "Habitability"
+FROM #biome
+SORT habitabilityScore ASC`,
+);
+
+const riversDataviewPage = buildDataviewMd(
+	"Rivers",
+	`TABLE type AS "Type", lengthStr AS "Length, flowRate AS "Flow m<sup>3</sup>/s", basin AS "Basin", parent AS "Parent"
+FROM #river
+SORT length ASC`,
+);
+
 export async function createDataviewPages(vault: IVaultDirectory) {
 	const dataViewWritePs: Promise<void>[] = [
 		writeDataviewPageToFile(culturesDataviewPage, vault.cultures),
 		writeDataviewPageToFile(burgsDataviewPage, vault.burgs),
 		writeDataviewPageToFile(markersDataviewPage, vault.poi),
+		writeDataviewPageToFile(routesDataviewPage, vault.routes),
+		writeDataviewPageToFile(statesDataviewPage, vault.states),
+		writeDataviewPageToFile(provincesDataviewPage, vault.provinces),
+		writeDataviewPageToFile(religionsDataviewPage, vault.religions),
+		writeDataviewPageToFile(biomesDataviewPage, vault.biomes),
+		writeDataviewPageToFile(riversDataviewPage, vault.rivers),
 	];
 
 	await Promise.allSettled(dataViewWritePs);
