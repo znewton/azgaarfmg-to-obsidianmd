@@ -4,7 +4,7 @@ import { burgToMd, cultureToMd } from "../conversions";
 import { CustomContentString } from "../markdown";
 import {
 	assetsDirectoryName,
-	type IPath,
+	type IVaultPath,
 	type IVaultDirectory,
 	mapDataDirectoryName,
 	worldDirectoryName,
@@ -20,9 +20,10 @@ describe("convert map objects to markdown", () => {
 		routeLinks: buildRouteLinks(koberzarJson as unknown as IJsonMap),
 	};
 	const exampleVaultRootDir = "/testVault";
-	const createMockVaultPath = (name: string): IPath => ({
+	const createMockVaultPath = (name: string): IVaultPath => ({
 		absolute: path.resolve(exampleVaultRootDir, name),
 		relative: path.relative(exampleVaultRootDir, name),
+		name,
 	});
 	const exampleVaultWorldPath = createMockVaultPath(worldDirectoryName);
 	const exampleVaultAssetsPath = createMockVaultPath(assetsDirectoryName);
@@ -31,6 +32,7 @@ describe("convert map objects to markdown", () => {
 		root: {
 			absolute: exampleVaultRootDir,
 			relative: path.relative(exampleVaultRootDir, exampleVaultRootDir),
+			name: "README",
 		},
 		world: exampleVaultWorldPath,
 		assets: exampleVaultAssetsPath,

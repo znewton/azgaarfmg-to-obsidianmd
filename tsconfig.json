@@ -4,7 +4,9 @@
 		"preserveConstEnums": true,
 		"outDir": "dist",
 		"resolveJsonModule": true,
-		"strictNullChecks": true
+		"strictNullChecks": true,
+		"declaration": true,
+		"declarationDir": "dist"
 	},
 	"include": ["src/**/*"],
 	"exclude": ["src/test/**/*"]
