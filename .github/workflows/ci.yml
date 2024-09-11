@@ -30,10 +30,12 @@ jobs:
       run: npm ci
     - name: Build
       run: npm run build
-    - name: Test w/ Coverage
-      uses: ArtiomTr/jest-coverage-report-action@v2
-      with:
-        test-script: npm test
+    - name: Test
+      run: npm test
+    # - name: Test w/ Coverage
+    #   uses: ArtiomTr/jest-coverage-report-action@v2
+    #   with:
+    #     test-script: npm test
     - name: Lint
       run: npm run lint
     - name: Format
