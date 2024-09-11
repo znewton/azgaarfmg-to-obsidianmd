@@ -2,7 +2,8 @@
 	"name": "azgaarfmg-to-obsidianmd",
 	"version": "0.0.1",
 	"description": "Convert a .json file from Azgaar's Fantasy Map Generator to an Obsidian Vault based on Josh Plunkett's Obsidian for TTRPGs",
-	"main": "dist/index.js",
+	"main": "./dist/index.js",
+	"types": "./dist/index.d.ts",
 	"scripts": {
 		"build": "tsc",
 		"convert": "node dist/index.js convert",
@@ -15,7 +16,7 @@
 		"url": "git+https://github.com/znewton/azgaarfmg-to-obsidianmd.git"
 	},
 	"keywords": ["JS", "ObsidianMD", "TTRPG", "FantasyMap", "WorldBuilding"],
-	"author": "znewton",
+	"author": "Zach Newton <znewton13@gmail.com>",
 	"license": "GPL-3.0-or-later",
 	"bugs": {
 		"url": "https://github.com/znewton/azgaarfmg-to-obsidianmd/issues"
